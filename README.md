@@ -4,7 +4,6 @@ A polished README for the ME555: Intro to Robotics final project — Robot Playi
 
 This repository contains code and assets for a two-player (and player-vs-robot) implementation of the Mastermind-like game where a robot physically picks and places colored pieces, and vision + language models help evaluate and/or choose guesses.
 
----
 
 ## Overview
 
@@ -25,7 +24,6 @@ Robot Playing Mastermind implements two gameplay modes:
 2. The robot makes guesses (color + position) driven by analysis from the ChatGPT API.
 3. A camera system (YOLO-based detector) inspects the robot’s placement and determines whether the guess is correct; the system feeds the results back for the next decision.
 
----
 
 ## Features
 
@@ -49,7 +47,6 @@ Repository structure (suggested)
 └─ docs/                    # setup, wiring diagrams, experiment notes
 ```
 
----
 
 ## License 
 This project is released under the MIT License — see LICENSE for full text.
