@@ -1,7 +1,5 @@
 # Robot Playing Mastermind
 
-A polished README for the ME555: Intro to Robotics final project — Robot Playing Mastermind.
-
 This repository contains code and assets for a two-player (and player-vs-robot) implementation of the Mastermind-like game where a robot physically picks and places colored pieces, and vision + language models help evaluate and/or choose guesses.
 
 
