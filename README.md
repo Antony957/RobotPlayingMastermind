@@ -75,6 +75,11 @@ mastermind:latest
 ```
 
 
+## Structure
+
+![structure](./docs/mastermind.png)
+
+
 ## License 
 This project is released under the MIT License — see LICENSE for full text.
 
