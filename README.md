@@ -49,9 +49,29 @@ Repository structure (suggested)
 ## How to run
 Step1. login using github.
 
+```bash
+ssh-keygen -t ed25519 -C "your_example@example"
+ssh-add ~/.ssh/id_ed25519
+```
+
 Step2. Build docker:
 ```bash
-docker run --rm -it   -v "$PWD:/root/workspaces" -e HOME=/root/ -e DISPLAY=$DISPLAY --net=host --gpus all --name mastermind   finalproject:latest
+docker build -t mastermind:latest .
+```
+
+Step3. Start docker:
+```bash
+# Allow Docker to open GUI Windows
+xhost +local:docker
+
+docker run --rm -it   \
+-v "$PWD:/root/workspaces" \
+-e HOME=/root/ \
+-e DISPLAY=$DISPLAY \
+--net=host \
+--gpus all \
+--name mastermind   \
+mastermind:latest
 ```
 
 

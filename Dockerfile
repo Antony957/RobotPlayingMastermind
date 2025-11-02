@@ -10,5 +10,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # (B) Add any extra Python packages into the course's virtual environment
 RUN . /opt/ros_python/bin/activate && \
     pip install --no-cache-dir \
-    opencv-python==4.10.* \
-    pyquaternion
+    -r requirements.txt
