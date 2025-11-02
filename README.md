@@ -46,6 +46,15 @@ Repository structure (suggested)
 ```
 
 
+## How to run
+Step1. login using github.
+
+Step2. Build docker:
+```bash
+docker run --rm -it   -v "$PWD:/root/workspaces" -e HOME=/root/ -e DISPLAY=$DISPLAY --net=host --gpus all --name mastermind   finalproject:latest
+```
+
+
 ## License 
 This project is released under the MIT License — see LICENSE for full text.
 
