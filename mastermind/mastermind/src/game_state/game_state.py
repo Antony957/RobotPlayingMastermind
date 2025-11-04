@@ -7,7 +7,6 @@ from rclpy.node import Node
 # TODO Need to check folder structure
 from mastermind.msg import Code, GuessCheck, Status
 
-# Here for reference. These also don't have to be dicts.
 COLOR_MAP = {
     0: "none",
     1: "red",
@@ -27,6 +26,19 @@ GAME_STATUS = {
 
 
 class GameState(Node):
+    """
+    Node to keep track of game state and pass messages.
+
+    Block diagram, with game status code (sent via /game_status topic)
+    or trigger (sent via /submit_code or /guess_check topic):
+
+             secret code              1            2             3
+    Player1 -------------> GameState ---> Player2 ---> RobotArm ---> ComputerVision
+                               ^                                           |
+                               |                guessed code               |
+                               |-------------------------------------------|
+    """
+
     def __init__(self, max_guesses: int = 10):
         super().__init__("game_state")
 
