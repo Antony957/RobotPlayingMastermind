@@ -70,7 +70,7 @@ class GameState(Node):
         """
         msg = Status()
         msg.sender = "game_state"
-        msg.status = self.current_game_status
+        msg.status = status
         self.game_status_pub.publish(msg)
 
         # Keep track, just in case
