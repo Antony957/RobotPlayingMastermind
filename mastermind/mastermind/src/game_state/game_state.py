@@ -25,8 +25,6 @@ GAME_STATUS = {
     5: "player 2 loses",  # end state 2
 }
 
-ROBOT_STATUS = {0: "pick", 1: "place", 3: "finished placing"}
-
 
 class GameState(Node):
     def __init__(self, max_guesses: int = 10):
@@ -48,9 +46,6 @@ class GameState(Node):
         # Subscriptions
         self.submit_code_sub = self.create_subscription(
             Code, "submit_code", self.handle_code, 10
-        )
-        self.robot_status_sub = self.create_subscription(
-            Code, "robot_status", self.handle_robot_status, 10
         )
 
         # Publishers
@@ -85,29 +80,6 @@ class GameState(Node):
 
         # Publish to guess_check so player_2 has feedback
         self.guess_check_pub.publish(msg)
-
-    def handle_robot_status(self, msg: Status):
-        """
-        Middleman between robot_arm and computer_vision.
-        When robot_arm publishes code 3 (finished placing),
-        we publish code 3 to game_status (waiting for comp_vision)
-        so computer_vision can start scanning.
-        """
-        if msg.sender != "robot_arm":
-            return
-
-        # For the game, we only care about code 3 from
-        # robot_arm, but we can log the other codes
-        if msg.code == 1:
-            self.get_logger().info("Robot arm is picking...")
-        elif msg.code == 2:
-            self.get_logger().info("Robot arm is placing...")
-        elif msg.code == 3:
-            self.get_logger().info("Robot arm is done!")
-
-            # Robot arm has finished pick/place sequence,
-            # so publish game status 3 ("waiting for computer_vision")
-            self.publish_game_status(3)
 
     def handle_code(self, msg: Code):
         """
