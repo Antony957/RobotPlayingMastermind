@@ -64,6 +64,19 @@ class GameState(Node):
         self.game_status_pub = self.create_publisher(Status, "game_status", 10)
         self.guess_check_pub = self.create_publisher(GuessCheck, "guess_check", 10)
 
+        # This is here as an example only (not used by this node) - delete later
+        self.code_pub = self.create_publisher(Code, "submit_code", 10)
+
+    def publish_code(self, code: List[int]):
+        """
+        This is here as an example only (not used by this node) - delete later
+        """
+        msg = Code()
+        msg.sender = "player_2"  # player_1, player_2, computer_vision, etc.
+        msg.code = code
+
+        self.code_pub.publish(msg)
+
     def publish_game_status(self, status: int):
         """
         Publish given status from sender "game_state".
