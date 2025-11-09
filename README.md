@@ -5,19 +5,6 @@ This repository contains code and assets for a two-player (and player-vs-robot) 
 
 ## Overview
 
-Robot Playing Mastermind implements two gameplay modes:
-
-**Mode 1 — PVP (Player vs Player)**
-
-1. Player 1 chooses a secret color combination of four game pieces.
-2. Player 2 controls the robot to pick colored pieces from boxes and place them into the guess slots.
-3. After each placement, Player 1 announces:
-    * how many colors are correct (regardless of position), and
-    * how many pieces are in the correct positions.
-    * The game continues until Player 2 correctly matches all 4 pieces (Player 2 wins), or Player 1 survives 10 rounds (Player 1 wins).
-
-**Mode 2 — PVE (Player vs Environment / Robot)**
-
 1. Player chooses a secret color combination of four game pieces.
 2. The robot makes guesses (color + position) driven by analysis from the ChatGPT API.
 3. A camera system (YOLO-based detector) inspects the robot’s placement and determines whether the guess is correct; the system feeds the results back for the next decision.
@@ -74,10 +61,26 @@ docker run --rm -it   \
 mastermind:latest
 ```
 
+## Data Flow 
+
+1. The user inputs target state at UI, UI model initilize the target combination (at simiulation). Or: The user put target state at detection area (in real world). After finished, UI model send a mark to CV model.
+
+2. CV model extract target state from detection area. After finished, CV send a mark to LLM model.
+
+3. 
+    ```
+    do {
+        1. LLM guess a combination based on history guess;
+        2. LLM send message to Control Model;
+        3. After control finished, send a mark to CV;
+        4. CV extract current state and send it to UI;
+        5. UI send a result (win or not) to LLM.
+    } while (!win)
+    ```
 
 ## Structure
 
-![structure](./docs/mastermind.png)
+![structure](./docs/mastermind.jpg)
 
 
 ## License 
