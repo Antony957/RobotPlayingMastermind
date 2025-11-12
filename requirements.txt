@@ -1,3 +1,4 @@
 opencv-python==4.10.*
 pyquaternion
 openai
+pydantic
