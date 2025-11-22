@@ -17,6 +17,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
         ('share/' + package_name + '/world',  glob('world/*')),
+        ('share' + package_name + 'launch', glob('launch/*.rviz')),
 
         ('share/' + package_name + '/models', files_under('models/*')),
         ('share/' + package_name + '/models/realsense_d435', files_under('models/realsense_d435/*')),

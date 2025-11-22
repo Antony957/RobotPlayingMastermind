@@ -3,15 +3,14 @@
   <world name="mastermind_world">
     <gravity>0 0 -9.81</gravity>
 
-    <!-- <plugin
-      filename="libgz-sim8-sensors-system.so"
+    <plugin
+      filename="gz-sim-sensors-system"
       name="gz::sim::systems::Sensors">
       <render_engine>ogre2</render_engine>
-    </plugin> -->
+    </plugin>
 
-    <!-- <plugin
-      filename="libgz-sim8-sensors-system.so"
-      name="gz::sim::systems::Sensors"/> -->
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
 
     <light name="sun" type="directional">
       <pose>0 0 100 0 0 0</pose>
@@ -245,15 +244,6 @@
         </visual>
       </link>
     </model>
-
-
-
-    <!-- Kinect-style RGB-D camera mounted on a pole in front of the table
-    <include>
-      <uri>model://kinect</uri>
-      <name>kinect</name>
-      <pose>0.42 -0.52 0 0 0 0</pose>
-    </include> -->
 
 
     <!-- RealSense D435 camera on a pole in front of the table -->

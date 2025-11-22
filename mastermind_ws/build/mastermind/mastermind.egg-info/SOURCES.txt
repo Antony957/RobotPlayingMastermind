@@ -1,6 +1,7 @@
 package.xml
 setup.cfg
 setup.py
+launch/mastermind.rviz
 launch/world.launch.py
 mastermind/__init__.py
 mastermind.egg-info/PKG-INFO

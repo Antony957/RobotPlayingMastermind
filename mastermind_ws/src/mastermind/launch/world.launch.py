@@ -13,7 +13,7 @@ def generate_launch_description() -> LaunchDescription:
     # 直接用 ament 的接口拿绝对路径
     pkg_share = get_package_share_directory('mastermind')
 
-    # 默认 world
+    # default world
     default_world = os.path.join(pkg_share, 'world', 'mastermind.sdf')
 
     world_arg = DeclareLaunchArgument(
@@ -39,15 +39,6 @@ def generate_launch_description() -> LaunchDescription:
             SetEnvironmentVariable(name=var, value=combined)
         )
 
-    # （可选）兼容旧的 Gazebo Classic
-    existing_gazebo_model = os.environ.get("GAZEBO_MODEL_PATH", "")
-    parts = [models_dir]
-    if existing_gazebo_model:
-        parts.append(existing_gazebo_model)
-    combined_gazebo = ":".join(parts)
-    env_actions.append(
-        SetEnvironmentVariable(name="GAZEBO_MODEL_PATH", value=combined_gazebo)
-    )
 
     # 启动 gz sim
     start_gz = ExecuteProcess(
@@ -59,26 +50,43 @@ def generate_launch_description() -> LaunchDescription:
         output='screen',
     )
 
-    # ROS <-> Gazebo 图像 & 相机信息桥
+    # ROS <-> Gazebo Image & Camera Info Bridge
     camera_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         arguments=[
-            '/mastermind/rgb_camera@sensor_msgs/msg/Image@gz.msgs.Image',
-            '/mastermind/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
+            '/realsense/image/image@sensor_msgs/msg/Image@gz.msgs.Image',
+            '/realsense/image/depth_image@sensor_msgs/msg/Image@gz.msgs.Image',
+            '/realsense/image/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
+            '/realsense/image/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked'
+        ],
+        remappings=[
+            # change gazebo topic name to what I want in ROS2
+            ('/realsense/image/image',       '/mastermind/realsense/image'),
+            ('/realsense/image/depth_image', '/mastermind/realsense/depth_image'),
+            ('/realsense/image/camera_info', '/mastermind/realsense/camera_info'),
+            ('/realsense/image/points',      '/mastermind/realsense/points'),
         ],
         output='screen',
     )
 
-    # RViz 显示
+    # RViz
     rviz = Node(
         package='rviz2',
         executable='rviz2',
         output='screen',
-        # 以后可以加自定义 rviz 配置：
-        # arguments=['-d', os.path.join(pkg_share, 'rviz', 'mastermind_camera.rviz')],
+        arguments=['-d', os.path.join(pkg_share, 'launch', 'mastermind.rviz')],
+    )
+
+    # Fake transform: Tells ROS that "realsense_d435/link" exists 
+    # and is located at the origin of the map.
+    tf_publisher = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments = ['0', '0', '0', '0', '0', '0', 'world', 'realsense_d435/link'],
+        output='screen',
     )
 
     return LaunchDescription(
-        [world_arg] + env_actions + [start_gz, camera_bridge, rviz]
+        [world_arg] + env_actions + [start_gz, camera_bridge, rviz, tf_publisher]
     )
