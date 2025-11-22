@@ -16,19 +16,13 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
-        ('share/' + package_name + '/world',  glob('world/*')),
+        ('share/' + package_name + '/world',  glob('world/*')), 
+        
         ('share' + package_name + 'launch', glob('launch/*.rviz')),
 
         ('share/' + package_name + '/models', files_under('models/*')),
         ('share/' + package_name + '/models/realsense_d435', files_under('models/realsense_d435/*')),
         ('share/' + package_name + '/models/realsense_d435/meshes', files_under('models/realsense_d435/meshes/*')),
-
-        ('share/' + package_name + '/models',                       files_under('models/*')),
-        ('share/' + package_name + '/models/kinect',                files_under('models/kinect/*')),
-        ('share/' + package_name + '/models/kinect/meshes',         files_under('models/kinect/meshes/*')),
-        ('share/' + package_name + '/models/kinect/materials',      files_under('models/kinect/materials/*')),
-        ('share/' + package_name + '/models/kinect/materials/textures',
-                                                                  files_under('models/kinect/materials/textures/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

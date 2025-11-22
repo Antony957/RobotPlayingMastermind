@@ -17,13 +17,9 @@ mastermind/src/robot_controller/__init__.py
 mastermind/src/ui/__init__.py
 mastermind/src/vision_model/__init__.py
 mastermind/src/vision_model/guess_scanner.py
-models/kinect/model-1_2.sdf
-models/kinect/model-1_3.sdf
-models/kinect/model-1_4.sdf
-models/kinect/model.config
-models/kinect/model.sdf
-models/kinect/materials/textures/kinect.png
-models/kinect/meshes/kinect.dae
+models/camera_mount.sdf
+models/cube.sdf
+models/gameboard.sdf
 models/realsense_d435/model.config
 models/realsense_d435/model.sdf
 models/realsense_d435/meshes/d415.stl

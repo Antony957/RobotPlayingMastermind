@@ -1,19 +1,19 @@
-# mastermind/launch/world.launch.py
-
 import os
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, SetEnvironmentVariable
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, SetEnvironmentVariable
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description() -> LaunchDescription:
-    # 直接用 ament 的接口拿绝对路径
+    # 1. Get Package Directories
     pkg_share = get_package_share_directory('mastermind')
+    pkg_kortex_bringup = get_package_share_directory('kortex_bringup')
 
-    # default world
+    # 2. Define World Path
     default_world = os.path.join(pkg_share, 'world', 'mastermind.sdf')
 
     world_arg = DeclareLaunchArgument(
@@ -22,13 +22,14 @@ def generate_launch_description() -> LaunchDescription:
         description='Absolute path to the Gazebo world file'
     )
 
-    # 我们自己的资源目录：world + models
+    # 3. Setup Resource Paths (World + Models)
+    # This ensures Gazebo can find "model://gameboard", "model://cubes", etc.
     world_dir  = os.path.join(pkg_share, 'world')
     models_dir = os.path.join(pkg_share, 'models')
 
     env_actions = []
 
-    # 帮 Gazebo Sim 8 找到这些资源目录
+    # Append internal resource paths to Gazebo environment variables
     for var in ["GZ_SIM_RESOURCE_PATH", "IGN_GAZEBO_RESOURCE_PATH"]:
         existing = os.environ.get(var, "")
         parts = [world_dir, models_dir]
@@ -39,18 +40,27 @@ def generate_launch_description() -> LaunchDescription:
             SetEnvironmentVariable(name=var, value=combined)
         )
 
-
-    # 启动 gz sim
-    start_gz = ExecuteProcess(
-        cmd=[
-            'gz', 'sim',
-            '-r',
-            LaunchConfiguration('world'),
-        ],
-        output='screen',
+    # 4. Launch Robot & Simulator (Kortex Bringup)
+    # We use the Kortex launch file to handle the robot controllers and Gazebo startup.
+    # We pass our custom world path to it.
+    kortex_sim = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_kortex_bringup, 'launch', 'kortex_sim_control.launch.py')
+        ),
+        launch_arguments={
+            'robot_type': 'gen3_lite',
+            'gripper': 'gen3_lite_2f',
+            'robot_name': 'gen3_lite',
+            'dof': '6',
+            'use_sim_time': 'true',
+            'launch_rviz': 'false', # We launch our own configured RViz below
+            'robot_controller': 'joint_trajectory_controller',
+            'sim_gazebo': 'true',
+            'world': LaunchConfiguration('world') # Pass our world here
+        }.items(),
     )
 
-    # ROS <-> Gazebo Image & Camera Info Bridge
+    # 5. ROS <-> Gazebo Bridges (Camera & PointCloud)
     camera_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -61,7 +71,7 @@ def generate_launch_description() -> LaunchDescription:
             '/realsense/image/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked'
         ],
         remappings=[
-            # change gazebo topic name to what I want in ROS2
+            # Remap Gazebo topics to custom ROS topics
             ('/realsense/image/image',       '/mastermind/realsense/image'),
             ('/realsense/image/depth_image', '/mastermind/realsense/depth_image'),
             ('/realsense/image/camera_info', '/mastermind/realsense/camera_info'),
@@ -70,7 +80,7 @@ def generate_launch_description() -> LaunchDescription:
         output='screen',
     )
 
-    # RViz
+    # 6. Launch RViz
     rviz = Node(
         package='rviz2',
         executable='rviz2',
@@ -78,8 +88,8 @@ def generate_launch_description() -> LaunchDescription:
         arguments=['-d', os.path.join(pkg_share, 'launch', 'mastermind.rviz')],
     )
 
-    # Fake transform: Tells ROS that "realsense_d435/link" exists 
-    # and is located at the origin of the map.
+    # 7. Static Transform Publisher
+    # Connects the camera link to the world frame so data appears correctly in RViz
     tf_publisher = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -88,5 +98,5 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     return LaunchDescription(
-        [world_arg] + env_actions + [start_gz, camera_bridge, rviz, tf_publisher]
+        [world_arg] + env_actions + [kortex_sim, camera_bridge, rviz, tf_publisher]
     )
