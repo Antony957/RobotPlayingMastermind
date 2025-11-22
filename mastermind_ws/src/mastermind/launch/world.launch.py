@@ -7,11 +7,18 @@ from launch.actions import DeclareLaunchArgument, ExecuteProcess, SetEnvironment
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
+from launch.substitutions import Command, PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description() -> LaunchDescription:
     # 直接用 ament 的接口拿绝对路径
     pkg_share = get_package_share_directory('mastermind')
+    kortex_share = get_package_share_directory('kortex_description')
+    kortex_resource_root = os.path.dirname(kortex_share)
+
+
 
     # default world
     default_world = os.path.join(pkg_share, 'world', 'mastermind.sdf')
@@ -28,10 +35,12 @@ def generate_launch_description() -> LaunchDescription:
 
     env_actions = []
 
-    # 帮 Gazebo Sim 8 找到这些资源目录
+    # 把 kortex_resource_root 也加进去
+    resource_paths = [world_dir, models_dir, kortex_resource_root]
+
     for var in ["GZ_SIM_RESOURCE_PATH", "IGN_GAZEBO_RESOURCE_PATH"]:
         existing = os.environ.get(var, "")
-        parts = [world_dir, models_dir]
+        parts = resource_paths.copy()
         if existing:
             parts.append(existing)
         combined = ":".join(parts)
@@ -49,6 +58,52 @@ def generate_launch_description() -> LaunchDescription:
         ],
         output='screen',
     )
+
+
+    # kortex_description 包路径
+
+    # 你给的这个 xacro：gen3_lite_gen3_lite_2f.xacro
+    gen3_xacro_path = os.path.join(
+        kortex_share,
+        'robots',
+        'gen3_lite_gen3_lite_2f.xacro'
+    )
+
+    # 调用 xacro 生成 URDF 文本，放到 robot_description 里
+    robot_description = ParameterValue(
+        Command(['xacro ', gen3_xacro_path]),
+        value_type=str
+    )
+
+    # 把 robot_description 发布出去（供 RViz / 其他节点用）
+    robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='gen3_lite_state_publisher',
+        parameters=[{'robot_description': robot_description}],
+        output='screen',
+    )
+
+    spawn_gen3 = Node(
+        package='ros_gz_sim',
+        executable='create',
+        arguments=[
+            '-name', 'gen3_lite',
+            '-topic', 'robot_description',
+            '-x', '0', '-y', '0', '-z', '0.75',
+        ],
+        output='screen',
+    )
+
+    # 给世界坐标和机械臂 base_link 一个静态 TF
+    # 如果 URDF 里的根 link 不是 base_link，就把最后那个改成对应名字
+    gen3_tf = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=['0', '0', '0', '0', '0', '0', 'world', 'base_link'],
+        output='screen',
+    )
+
 
     # ROS <-> Gazebo Image & Camera Info Bridge
     camera_bridge = Node(
@@ -78,8 +133,7 @@ def generate_launch_description() -> LaunchDescription:
         arguments=['-d', os.path.join(pkg_share, 'launch', 'mastermind.rviz')],
     )
 
-    # Fake transform: Tells ROS that "realsense_d435/link" exists 
-    # and is located at the origin of the map.
+
     tf_publisher = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -88,5 +142,5 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     return LaunchDescription(
-        [world_arg] + env_actions + [start_gz, camera_bridge, rviz, tf_publisher]
+        [world_arg] + env_actions + [start_gz, robot_state_publisher, spawn_gen3, gen3_tf, camera_bridge, rviz, tf_publisher]
     )
