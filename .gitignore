@@ -1,5 +1,5 @@
 .config
 .bash_history
-build/
-install/
-log/
+mastermind_ws/build/
+mastermind_ws/install/
+mastermind_ws/log/
