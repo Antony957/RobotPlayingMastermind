@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 
-import time
-import threading
-import subprocess
 import os
+import subprocess
+import threading
+import time
 
 import rclpy
-from rclpy.node import Node
-from rclpy.executors import MultiThreadedExecutor
-
 from geometry_msgs.msg import Pose
-
 from pymoveit2 import MoveIt2
 from pymoveit2.gripper_interface import GripperInterface
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
+
+from mastermind.msg import Code, Status
+
+from ..game_state.game_state import COLOR_TO_NUM, GAME_STATUS, NUM_TO_COLOR
 
 
 def make_pose(x, y, z, qx, qy, qz, qw) -> Pose:
@@ -56,9 +58,7 @@ class PickAndPlaceNode(Node):
         self.place_clearance = (
             self.get_parameter("place_clearance").get_parameter_value().double_value
         )
-        self.world_name = (
-            self.get_parameter("world").get_parameter_value().string_value
-        )
+        self.world_name = self.get_parameter("world").get_parameter_value().string_value
         self.gz_block_center_z = (
             self.get_parameter("gz_block_center_z").get_parameter_value().double_value
         )
@@ -66,7 +66,14 @@ class PickAndPlaceNode(Node):
         # --- robot / moveit setup ---
         self.moveit2 = MoveIt2(
             node=self,
-            joint_names=["joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"],
+            joint_names=[
+                "joint_1",
+                "joint_2",
+                "joint_3",
+                "joint_4",
+                "joint_5",
+                "joint_6",
+            ],
             base_link_name="base_link",
             end_effector_name="end_effector_link",
             group_name="arm",
@@ -83,12 +90,12 @@ class PickAndPlaceNode(Node):
 
         # block poses MUST match your spawn_blocks.sh
         self.blocks_xyz = [
-            (block_x, -0.08, self.block_center_z),   # block_1: RED
-            (block_x,  0.00, self.block_center_z),   # block_2: BLUE
-            (block_x,  0.08, self.block_center_z),   # block_3: YELLOW
-            (block_x,  0.16, self.block_center_z),   # block_4: GREEN
-            (0.33,     0.16, self.block_center_z),   # block_5: PURPLE
-            (0.33,     0.00, self.block_center_z),   # block_6: BLACK
+            (block_x, -0.08, self.block_center_z),  # block_1: RED
+            (block_x, 0.00, self.block_center_z),  # block_2: BLUE
+            (block_x, 0.08, self.block_center_z),  # block_3: YELLOW
+            (block_x, 0.16, self.block_center_z),  # block_4: GREEN
+            (0.33, 0.16, self.block_center_z),  # block_5: PURPLE
+            (0.33, 0.00, self.block_center_z),  # block_6: BLACK
         ]
 
         # UPDATED drop spots you already tuned
@@ -104,9 +111,7 @@ class PickAndPlaceNode(Node):
 
         # placing height lifted to match plate being higher/thicker
         self.plate_height_offset = (
-            self.get_parameter("plate_height_offset")
-            .get_parameter_value()
-            .double_value
+            self.get_parameter("plate_height_offset").get_parameter_value().double_value
         )
         self.place_height = self.grasp_height + self.plate_height_offset
 
@@ -126,7 +131,10 @@ class PickAndPlaceNode(Node):
         # place_z uses clearance
         place_z = self.place_height + self.place_clearance
         self.pre_place_pose = make_pose(
-            target_xyz[0], target_xyz[1], self.approach_height, *self.top_down_orientation
+            target_xyz[0],
+            target_xyz[1],
+            self.approach_height,
+            *self.top_down_orientation,
         )
         self.place_pose = make_pose(
             target_xyz[0], target_xyz[1], place_z, *self.top_down_orientation
@@ -143,15 +151,6 @@ class PickAndPlaceNode(Node):
 
         self.block_size = block_size
         self.release_up_dz = 0.03
-
-        self.color_to_index = {
-            "red": 0,
-            "blue": 1,
-            "yellow": 2,
-            "green": 3,
-            "purple": 4,
-            "black": 5,
-        }
 
         # ---------------- GRIPPER SETUP ----------------
         action_name = self._auto_find_gripper_action()
@@ -174,12 +173,12 @@ class PickAndPlaceNode(Node):
         # spawn_blocks.sh writes SDFs here
         self.sdf_dir = "/tmp/lab06_spawn"
         self.color_to_sdf = {
-            "red":    os.path.join(self.sdf_dir, "cube_red.sdf"),
-            "blue":   os.path.join(self.sdf_dir, "cube_blue.sdf"),
+            "red": os.path.join(self.sdf_dir, "cube_red.sdf"),
+            "blue": os.path.join(self.sdf_dir, "cube_blue.sdf"),
             "yellow": os.path.join(self.sdf_dir, "cube_yellow.sdf"),
-            "green":  os.path.join(self.sdf_dir, "cube_green.sdf"),
+            "green": os.path.join(self.sdf_dir, "cube_green.sdf"),
             "purple": os.path.join(self.sdf_dir, "cube_purple.sdf"),
-            "black":  os.path.join(self.sdf_dir, "cube_black.sdf"),
+            "black": os.path.join(self.sdf_dir, "cube_black.sdf"),
         }
 
         # Gazebo base model names from spawn_blocks.sh
@@ -193,26 +192,60 @@ class PickAndPlaceNode(Node):
         }
 
         # Original pickup xyz per color (use same x,y each time)
-        self.color_spawn_xyz = {
-            c: self.blocks_xyz[i] for c, i in self.color_to_index.items()
-        }
+        self.color_spawn_xyz = {c: self.blocks_xyz[i] for c, i in COLOR_TO_NUM.items()}
 
         # Queue of available MoveIt collision IDs per color
         # Start with original block_1..block_6 IDs
         self.color_pick_queue = {
-            "red":    ["block_1"],
-            "blue":   ["block_2"],
+            "red": ["block_1"],
+            "blue": ["block_2"],
             "yellow": ["block_3"],
-            "green":  ["block_4"],
+            "green": ["block_4"],
             "purple": ["block_5"],
-            "black":  ["block_6"],
+            "black": ["block_6"],
         }
 
         # Counter to make unique respawned names
-        self.spawn_counter = {c: 1 for c in self.color_to_index.keys()}
+        self.spawn_counter = {c: 1 for c in COLOR_TO_NUM.keys()}
 
         # detect gz long-flag support (like your spawn script)
         self.gz_use_long_flags = self._gz_has_long_flags()
+
+        # Pub/sub
+        self.submit_code_sub = self.create_subscription(
+            Code, "submit_code", self.handle_code, 10
+        )
+        self.game_status_pub = self.create_publisher(Status, "game_status", 10)
+
+    def handle_code(self, msg: Code):
+        """
+        Callback for submit_code topic subscriber.
+        Task:
+            - Parse Code message to make sure author isn't player_1
+            - Turn code integers to code string, e.g., "red blue red blue"
+            - Run task_place_by_color(colors_str) with color string
+        """
+        player_name = msg.player_name
+        code = msg.code
+
+        if player_name == "player_1":
+            return
+
+        self.get_logger().info(f"Code {code} received from computer_vision")
+
+        # Turn numeric code to string and pass to pick and place method
+        colors = [NUM_TO_COLOR[c] for c in code]
+        colors_str = " ".join(colors)
+        self.task_place_by_color(colors_str)
+
+    def publish_game_status(self, status: int):
+        """
+        Publish given status from sender 'robot_arm'.
+        """
+        msg = Status()
+        msg.sender = "robot_arm"
+        msg.status = status
+        self.game_status_pub.publish(msg)
 
     # ---------------------- GRIPPER AUTO-DETECT ----------------------
     def _auto_find_gripper_action(self) -> str:
@@ -245,36 +278,58 @@ class PickAndPlaceNode(Node):
         except Exception:
             return True
 
-    def _gazebo_spawn(self, sdf_path: str, model_name: str, x: float, y: float, z: float):
+    def _gazebo_spawn(
+        self, sdf_path: str, model_name: str, x: float, y: float, z: float
+    ):
         payload = (
             f'sdf_filename: "{sdf_path}"\n'
             f'name: "{model_name}"\n'
-            f'pose {{ position {{ x: {x} y: {y} z: {z} }} }}\n'
-            f'allow_renaming: false\n'
+            f"pose {{ position {{ x: {x} y: {y} z: {z} }} }}\n"
+            f"allow_renaming: false\n"
         )
 
         if self.gz_use_long_flags:
             cmd = [
-                "gz", "service", "-s", f"/world/{self.world_name}/create",
-                "--reqtype", "gz.msgs.EntityFactory",
-                "--reptype", "gz.msgs.Boolean",
-                "--timeout", "3000",
-                "--req", payload
+                "gz",
+                "service",
+                "-s",
+                f"/world/{self.world_name}/create",
+                "--reqtype",
+                "gz.msgs.EntityFactory",
+                "--reptype",
+                "gz.msgs.Boolean",
+                "--timeout",
+                "3000",
+                "--req",
+                payload,
             ]
         else:
             cmd = [
-                "gz", "service", "-s", f"/world/{self.world_name}/create",
-                "-m", "gz.msgs.EntityFactory",
-                "-r", "gz.msgs.Boolean",
-                "-t", "3000",
-                "-p", payload
+                "gz",
+                "service",
+                "-s",
+                f"/world/{self.world_name}/create",
+                "-m",
+                "gz.msgs.EntityFactory",
+                "-r",
+                "gz.msgs.Boolean",
+                "-t",
+                "3000",
+                "-p",
+                payload,
             ]
 
         try:
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            self.get_logger().info(f"[respawn] Spawned {model_name} at ({x:.3f},{y:.3f},{z:.3f})")
+            subprocess.run(
+                cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            self.get_logger().info(
+                f"[respawn] Spawned {model_name} at ({x:.3f},{y:.3f},{z:.3f})"
+            )
         except Exception as e:
-            self.get_logger().warn(f"[respawn] Gazebo spawn failed for {model_name}: {e}")
+            self.get_logger().warn(
+                f"[respawn] Gazebo spawn failed for {model_name}: {e}"
+            )
 
     def _respawn_color(self, color: str):
         if color not in self.color_to_sdf:
@@ -325,7 +380,11 @@ class PickAndPlaceNode(Node):
             cartesian_fraction_threshold=0.90 if cartesian else None,
         )
         if traj is None:
-            ec = self.moveit2._planning_result.error_code.val if hasattr(self.moveit2, "_planning_result") else None
+            ec = (
+                self.moveit2._planning_result.error_code.val
+                if hasattr(self.moveit2, "_planning_result")
+                else None
+            )
             self.get_logger().warn(f"Planning failed! Error code: {ec}.")
             self.get_logger().error("Planning failed.")
             return False
@@ -388,8 +447,10 @@ class PickAndPlaceNode(Node):
         self.get_logger().info("Planning scene has been set up.")
 
     # -------------------- place by color order (supports duplicates + respawn) --------------------
-    def task_place_by_color(self):
-        order_str = self.get_parameter("order").get_parameter_value().string_value
+    def task_place_by_color(self, order_str=None):
+        if order_str is None:
+            order_str = self.get_parameter("order").get_parameter_value().string_value
+
         tokens = [t.strip().lower() for t in order_str.split() if t.strip()]
         if not tokens:
             self.get_logger().warn("No colors given in 'order' param; nothing to do.")
@@ -424,14 +485,21 @@ class PickAndPlaceNode(Node):
                 f"Placing color '{color}' -> {block_id} to spot {drop_idx+1}"
             )
 
-            pre_pick = make_pose(pick_x, pick_y, self.approach_height, *self.top_down_orientation)
-            pick_pose = make_pose(pick_x, pick_y, self.grasp_height, *self.top_down_orientation)
-            pre_drop = make_pose(drop_x, drop_y, self.approach_height, *self.top_down_orientation)
+            pre_pick = make_pose(
+                pick_x, pick_y, self.approach_height, *self.top_down_orientation
+            )
+            pick_pose = make_pose(
+                pick_x, pick_y, self.grasp_height, *self.top_down_orientation
+            )
+            pre_drop = make_pose(
+                drop_x, drop_y, self.approach_height, *self.top_down_orientation
+            )
 
             drop_pose = make_pose(
-                drop_x, drop_y,
+                drop_x,
+                drop_y,
                 self.place_height + self.place_clearance,
-                *self.top_down_orientation
+                *self.top_down_orientation,
             )
 
             if not self.move_to_pose(pre_pick):
@@ -441,14 +509,18 @@ class PickAndPlaceNode(Node):
                 self.get_logger().error(f"Could not descend to {block_id}")
                 return
 
-            squat_pose = make_pose(pick_x, pick_y, self.grasp_height - 0.002, *self.top_down_orientation)
+            squat_pose = make_pose(
+                pick_x, pick_y, self.grasp_height - 0.002, *self.top_down_orientation
+            )
             _ = self.move_to_pose(squat_pose, cartesian=True)
 
             ok = self.close_gripper()
             time.sleep(0.1)
             if not ok:
                 self.get_logger().warn("Close gripper failed, attaching anyway.")
-            self.moveit2.attach_collision_object(block_id, "end_effector_link", self.touch_links)
+            self.moveit2.attach_collision_object(
+                block_id, "end_effector_link", self.touch_links
+            )
 
             time.sleep(self.close_wait_sec)
 
@@ -481,6 +553,9 @@ class PickAndPlaceNode(Node):
 
         self.move_to_joints(self.j_retract)
         self.get_logger().info("Color-ordered placement complete.")
+
+        # Set game status to 3 so camera can start
+        self.publish_game_status(3)
 
     # -------------------- shortcuts --------------------
     def task_home(self):
