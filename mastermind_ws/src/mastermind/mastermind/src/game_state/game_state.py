@@ -1,22 +1,34 @@
 import os
+import threading
 from typing import List
 
 import rclpy
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 # TODO Need to check folder structure
 from mastermind.msg import Code, GuessCheck, Status
 
-COLOR_MAP = {
-    0: "none",
-    1: "red",
-    2: "green",
-    3: "blue",
-    4: "yellow",
+NUM_TO_COLOR = {
+    0: "red",
+    1: "green",
+    2: "blue",
+    3: "yellow",
+    4: "purple",
+    5: "black",
+}
+
+COLOR_TO_NUM = {
+    "red": 0,
+    "green": 1,
+    "blue": 2,
+    "yellow": 3,
+    "purple": 4,
+    "black": 5,
 }
 
 GAME_STATUS = {
-    0: "waiting for player 1",  # player 1 watches for this to start game
+    0: "waiting to start",
     1: "waiting for player 2",  # player 2 watches for this to make guess
     2: "waiting for robot arm",  # player 2 publishes this, robot_arm watches for this
     3: "waiting for computer_vision",  # robot_arm publishes this, CV watches for this
@@ -59,6 +71,9 @@ class GameState(Node):
         self.submit_code_sub = self.create_subscription(
             Code, "submit_code", self.handle_code, 10
         )
+        self.game_status_sub = self.create_subscription(
+            Status, "game_status", self.handle_status, 10
+        )
 
         # Publishers
         self.game_status_pub = self.create_publisher(Status, "game_status", 10)
@@ -66,16 +81,6 @@ class GameState(Node):
 
         # This is here as an example only (not used by this node) - delete later
         self.code_pub = self.create_publisher(Code, "submit_code", 10)
-
-    def publish_code(self, code: List[int]):
-        """
-        This is here as an example only (not used by this node) - delete later
-        """
-        msg = Code()
-        msg.sender = "player_2"  # player_1, player_2, computer_vision, etc.
-        msg.code = code
-
-        self.code_pub.publish(msg)
 
     def publish_game_status(self, status: int):
         """
@@ -85,10 +90,6 @@ class GameState(Node):
         msg.sender = "game_state"
         msg.status = status
         self.game_status_pub.publish(msg)
-
-        # Keep track, just in case
-        self.current_game_status = status
-        self.get_logger().info(f"Game status: {status} - {GAME_STATUS[status]}")
 
     def publish_guess_check(self):
         """
@@ -105,6 +106,18 @@ class GameState(Node):
 
         # Publish to guess_check so player_2 has feedback
         self.guess_check_pub.publish(msg)
+
+    def handle_status(self, msg: Status):
+        """
+        Subscribe to 'game_status' and keep track of current game status.
+        """
+        sender = msg.sender
+        status = msg.status
+
+        self.current_game_status = status
+        self.get_logger().info(
+            f"Game status: {status} - {GAME_STATUS[status]} set by {sender}."
+        )
 
     def handle_code(self, msg: Code):
         """
@@ -123,6 +136,11 @@ class GameState(Node):
 
             self.secret_code = msg.code
             self.publish_game_status(1)
+
+        # If code comes from player 2, just set game_status to 2 (waiting for robot arm)
+        elif msg.player_name == "player_2":
+            self.get_logger().info(f"Code {msg.code} received from player 2!")
+            self.publish_game_status(2)
 
         # If code comes from computer_vision, check guess
         # and publish appropriate status and/or feedback for player_2
@@ -178,15 +196,3 @@ class GameState(Node):
 
         # For convenience, return True if guess matches secret
         return self.num_correct_colors == 4 and self.num_correct_pos == 4
-
-
-def main():
-    rclpy.init()
-    game_state = GameState()
-    try:
-        rclpy.spin(game_state)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        game_state.destory_node()
-        rclpy.shutdown()
