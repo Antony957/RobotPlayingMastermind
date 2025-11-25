@@ -1,4 +1,5 @@
 .config
 .bash_history
 .vscode
+__pycache__/
 
