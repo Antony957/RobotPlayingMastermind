@@ -6,7 +6,6 @@ import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-# TODO Need to check folder structure
 from mastermind_interfaces.msg import Code, GuessCheck, Status
 
 NUM_TO_COLOR = {
