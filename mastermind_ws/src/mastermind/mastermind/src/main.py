@@ -6,7 +6,7 @@ import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from mastermind.msg import Code
+from mastermind_interfaces.msg import Code
 
 from .game_state.game_state import COLOR_TO_NUM, GameState
 from .robot_controller.pick_and_place import PickAndPlaceNode

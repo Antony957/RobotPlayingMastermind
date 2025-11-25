@@ -8,7 +8,7 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 # TODO Need to check folder structure
-from mastermind.msg import Code, GuessCheck, Status
+from mastermind_interfaces.msg import Code, GuessCheck, Status
 
 from ..game_state.game_state import COLOR_TO_NUM
 from ..robot_controller.pick_and_place import PickAndPlaceNode

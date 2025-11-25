@@ -12,7 +12,7 @@ from pymoveit2.gripper_interface import GripperInterface
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from mastermind.msg import Code, Status
+from mastermind_interfaces.msg import Code, Status
 
 from ..game_state.game_state import COLOR_TO_NUM, GAME_STATUS, NUM_TO_COLOR
 
