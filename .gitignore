@@ -2,4 +2,7 @@
 .bash_history
 .vscode
 __pycache__/
+build/
+install/
+log/
 
