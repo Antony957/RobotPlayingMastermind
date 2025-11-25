@@ -212,10 +212,10 @@ class PickAndPlaceNode(Node):
         self.gz_use_long_flags = self._gz_has_long_flags()
 
         # Pub/sub
+        self.game_status_pub = self.create_publisher(Status, "game_status", 10)
         self.submit_code_sub = self.create_subscription(
             Code, "submit_code", self.handle_code, 10
         )
-        self.game_status_pub = self.create_publisher(Status, "game_status", 10)
 
     def handle_code(self, msg: Code):
         """

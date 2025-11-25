@@ -1,5 +1,5 @@
 import threading
-from time import time
+import time
 from typing import List
 
 import rclpy
@@ -9,7 +9,7 @@ from rclpy.node import Node
 from mastermind_interfaces.msg import Code
 
 from .game_state.game_state import COLOR_TO_NUM, GameState
-from .robot_controller.pick_and_place import PickAndPlaceNode
+# from .robot_controller.pick_and_place import PickAndPlaceNode
 
 
 class Mastermind(Node):
@@ -23,7 +23,7 @@ class Mastermind(Node):
 
         # Game nodes
         self.game_state = GameState()
-        self.pick_and_place = PickAndPlaceNode()
+        # self.pick_and_place = PickAndPlaceNode()
 
         # Pub/subs
         self.code_pub = self.create_publisher(Code, "submit_code", 10)
@@ -39,25 +39,33 @@ class Mastermind(Node):
         executor = MultiThreadedExecutor(num_threads=3)
         executor.add_node(self)
         executor.add_node(self.game_state)
-        executor.add_node(self.pick_and_place)
+        # executor.add_node(self.pick_and_place)
 
         try:
             spin_thread = threading.Thread(target=executor.spin, daemon=True)
             spin_thread.start()
 
-            # Sleep for 1 second to make sure all our pub/subs are up and running
-            time.sleep(1)
+            # Wait until we have enough subscribers to submit_code
+            # (i.e., that GameState is active)
+            num_subs_submit_code = 1
+            while self.code_pub.get_subscription_count() < num_subs_submit_code:
+                self.get_logger().info("Waiting for /submit_code subscriber...")
+                time.sleep(0.1)
 
             secret_list = secret.split(" ")
             code = [COLOR_TO_NUM[c] for c in secret_list]
             self.publish_code(code)
+
+            # For now we keep this process running for 5 seconds.
+            time.sleep(5)
+
         except KeyboardInterrupt:
             pass
         finally:
             executor.shutdown()
             spin_thread.join(timeout=1.0)
             self.game_state.destroy_node()
-            self.pick_and_place.destroy_node()
+            # self.pick_and_place.destroy_node()
             self.destroy_node()
             rclpy.shutdown()
 
@@ -66,12 +74,11 @@ class Mastermind(Node):
         Publish secret code as Player 1
         """
         msg = Code()
-        msg.sender = "player_1"  # player_1, player_2, computer_vision, etc.
+        msg.player_name = "player_1"  # player_1, player_2, computer_vision, etc.
         msg.code = code
 
-        self.get_logger().log("Player 1 publishing secret!")
-
         self.code_pub.publish(msg)
+        self.get_logger().info(f"Player 1 published secret {code}!")
 
 
 def main():

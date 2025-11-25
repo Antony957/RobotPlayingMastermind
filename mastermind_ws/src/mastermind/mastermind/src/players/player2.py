@@ -35,7 +35,7 @@ class Player2(Node):
         Publish guess to /submit_code topic
         """
         msg = Code()
-        msg.sender = "player_2"  # player_1, player_2, computer_vision, etc.
+        msg.player_name = "player_2"  # player_1, player_2, computer_vision, etc.
         msg.code = code
 
         self.code_pub.publish(msg)
