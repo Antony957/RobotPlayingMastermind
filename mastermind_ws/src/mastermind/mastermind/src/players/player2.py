@@ -9,8 +9,7 @@ from rclpy.node import Node
 
 from mastermind_interfaces.msg import Code, GuessCheck, Status
 
-from ..game_state.game_state import COLOR_TO_NUM
-from ..robot_controller.pick_and_place import PickAndPlaceNode
+from ..game_state.game_state import COLOR_TO_NUM, GAME_STATUS
 
 
 class Player2(Node):
@@ -22,7 +21,7 @@ class Player2(Node):
     def __init__(self):
         super().__init__("player_2")
 
-        # Publishrs
+        # Publishers
         self.code_pub = self.create_publisher(Code, "submit_code", 10)
 
         # For input thread
@@ -39,7 +38,6 @@ class Player2(Node):
         msg.code = code
 
         self.code_pub.publish(msg)
-        self.publish_game_status(2)
 
     def input_loop(self):
         """
