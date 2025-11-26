@@ -18,6 +18,6 @@ setup(
     license="TODO: License declaration",
     extras_require={"test": ["pytest"]},
     entry_points={
-        "console_scripts": ["main = mastermind.src.main:main"],
+        "console_scripts": ["main = mastermind.src.main:main", "player2=mastermind.src.players.player2:main"],
     },
 )
