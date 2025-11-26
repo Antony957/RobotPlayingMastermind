@@ -1,6 +1,6 @@
 import os
 import threading
-from time import time
+import time
 from typing import List
 
 import rclpy
@@ -47,7 +47,7 @@ class Player2(Node):
             try:
                 # Ask user for input
                 user_input = input(
-                    "\nEnter your guess (e.g. 'red blue red blue') or 'q' to quit: "
+                    "\nEnter your guess (e.g. 'red blue red blue') or 'q' to quit:\n"
                 ).strip()
 
                 if user_input.lower() in ["q", "quit", "exit"]:
