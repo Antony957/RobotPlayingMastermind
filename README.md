@@ -61,6 +61,8 @@ docker run --rm -it   \
 mastermind:latest
 ```
 
+For commands to run in the Docker environment, go [here](https://github.com/Antony957/RobotPlayingMastermind/tree/combine/mastermind_ws).
+
 ## Data Flow 
 
 1. The user inputs target state at UI, UI model initilize the target combination (at simiulation). Or: The user put target state at detection area (in real world). After finished, UI model send a mark to CV model.
