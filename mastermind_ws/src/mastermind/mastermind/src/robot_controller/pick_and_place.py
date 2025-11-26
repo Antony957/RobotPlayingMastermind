@@ -42,10 +42,10 @@ class PickAndPlaceNode(Node):
         # extra release clearance above plate to avoid tilted block clipping through
         self.declare_parameter("place_clearance", 0.02)  # 2 cm
 
-        # Gazebo world name (your spawn uses "empty")
+        # Gazebo world name (spawn uses "empty")
         self.declare_parameter("world", "empty")
 
-        # Gazebo block center height (from your spawn_blocks.sh)
+        # Gazebo block center height (from spawn_blocks.sh)
         # TABLE_TOP_Z=0.30, BLOCK_SIZE=0.04, BLOCK_DROP=0.01 -> BLOCK_Z = 0.33
         self.declare_parameter("gz_block_center_z", 0.33)
 
@@ -228,10 +228,12 @@ class PickAndPlaceNode(Node):
         player_name = msg.player_name
         code = msg.code
 
+        self.get_logger().info(f"Arm received {code} from {player_name}!")
+
         if player_name == "player_1":
             return
 
-        self.get_logger().info(f"Code {code} received from computer_vision")
+        self.get_logger().info("Starting pick and place...")
 
         # Turn numeric code to string and pass to pick and place method
         colors = [NUM_TO_COLOR[c] for c in code]
@@ -369,6 +371,7 @@ class PickAndPlaceNode(Node):
 
     # ---------------------- utils ----------------------
     def move_to_joints(self, joints):
+        self.get_logger().info("Move to joints")
         self.moveit2.move_to_configuration(joint_positions=joints)
         self.moveit2.wait_until_executed()
 
