@@ -17,7 +17,7 @@ ros2 launch kinova_gen3_lite_moveit_config sim.launch.py use_sim_time:=true
 
 ## terminal4 : run the whole game
 not finished
-
+s
 
 ### test code separately
 
