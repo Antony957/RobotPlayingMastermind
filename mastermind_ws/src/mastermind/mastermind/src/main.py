@@ -3,13 +3,13 @@ import time
 from typing import List
 
 import rclpy
+from mastermind_interfaces.msg import Code
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from mastermind_interfaces.msg import Code
-
 from .game_state.game_state import COLOR_TO_NUM, GameState
 from .robot_controller.pick_and_place import PickAndPlaceNode
+from .vision_model.vision import VisionNode
 
 
 class Mastermind(Node):
@@ -23,7 +23,8 @@ class Mastermind(Node):
 
         # Game nodes
         self.game_state = GameState()
-        # self.pick_and_place = PickAndPlaceNode()
+        self.pick_and_place = PickAndPlaceNode()
+        self.vision = VisionNode()
 
         # Pub/subs
         self.code_pub = self.create_publisher(Code, "submit_code", 10)
@@ -39,7 +40,8 @@ class Mastermind(Node):
         executor = MultiThreadedExecutor(num_threads=3)
         executor.add_node(self)
         executor.add_node(self.game_state)
-        # executor.add_node(self.pick_and_place)
+        executor.add_node(self.pick_and_place)
+        executor.add_node(self.vision)
 
         try:
             spin_thread = threading.Thread(target=executor.spin, daemon=True)
@@ -66,7 +68,8 @@ class Mastermind(Node):
             executor.shutdown()
             spin_thread.join(timeout=1.0)
             self.game_state.destroy_node()
-            # self.pick_and_place.destroy_node()
+            self.pick_and_place.destroy_node()
+            self.vision.destroy_node()
             self.destroy_node()
             rclpy.shutdown()
 
