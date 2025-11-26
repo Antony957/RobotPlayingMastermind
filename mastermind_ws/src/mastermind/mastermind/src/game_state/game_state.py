@@ -115,7 +115,7 @@ class GameState(Node):
 
         self.current_game_status = status
         self.get_logger().info(
-            f"Game status: {status} - {GAME_STATUS[status]} set by {sender}."
+            f"Game status: {status} ({GAME_STATUS[status]}) set by {sender}."
         )
 
     def handle_code(self, msg: Code):
