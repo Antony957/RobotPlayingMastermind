@@ -7,9 +7,10 @@
   <maintainer email="root@todo.todo">root</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>rclpy</depend>
+  <exec_depend>rclpy</exec_depend>
   <exec_depend>pymoveit2</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+
   <exec_depend>mastermind_interfaces</exec_depend>
   <exec_depend>gazebo_ros</exec_depend>
   <exec_depend>kortex_description</exec_depend>
