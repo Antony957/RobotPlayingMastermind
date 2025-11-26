@@ -1,1 +1,1 @@
-azure_kinect_ros_driver:gazebo_ros:rclpy:ros_gz_bridge:ros_gz_sim
+gazebo_ros:kortex_description:mastermind_interfaces:rclpy:ros_gz_bridge:ros_gz_sim

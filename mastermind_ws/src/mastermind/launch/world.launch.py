@@ -43,9 +43,11 @@ def generate_launch_description() -> LaunchDescription:
     # 4. Launch Robot & Simulator (Kortex Bringup)
     # We use the Kortex launch file to handle the robot controllers and Gazebo startup.
     # We pass our custom world path to it.
+
     kortex_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_kortex_bringup, 'launch', 'kortex_sim_control.launch.py')
+            # os.path.join(pkg_share, 'launch', 'kortex_sim_control.launch.py')
         ),
         launch_arguments={
             'robot_type': 'gen3_lite',
@@ -56,47 +58,55 @@ def generate_launch_description() -> LaunchDescription:
             'launch_rviz': 'false', # We launch our own configured RViz below
             'robot_controller': 'joint_trajectory_controller',
             'sim_gazebo': 'true',
-            'world': LaunchConfiguration('world') # Pass our world here
+
+
+
+            # 'world': LaunchConfiguration('world') # Pass our world here
         }.items(),
     )
 
     # 5. ROS <-> Gazebo Bridges (Camera & PointCloud)
-    camera_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        arguments=[
-            '/realsense/image/image@sensor_msgs/msg/Image@gz.msgs.Image',
-            '/realsense/image/depth_image@sensor_msgs/msg/Image@gz.msgs.Image',
-            '/realsense/image/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
-            '/realsense/image/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked'
-        ],
-        remappings=[
-            # Remap Gazebo topics to custom ROS topics
-            ('/realsense/image/image',       '/mastermind/realsense/image'),
-            ('/realsense/image/depth_image', '/mastermind/realsense/depth_image'),
-            ('/realsense/image/camera_info', '/mastermind/realsense/camera_info'),
-            ('/realsense/image/points',      '/mastermind/realsense/points'),
-        ],
-        output='screen',
-    )
+    # camera_bridge = Node(
+    #     package='ros_gz_bridge',
+    #     executable='parameter_bridge',
+    #     arguments=[
+    #         '/realsense/image/image@sensor_msgs/msg/Image@gz.msgs.Image',
+    #         '/realsense/image/depth_image@sensor_msgs/msg/Image@gz.msgs.Image',
+    #         '/realsense/image/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo',
+    #         '/realsense/image/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked'
+    #     ],
+    #     remappings=[
+    #         # Remap Gazebo topics to custom ROS topics
+    #         ('/realsense/image/image',       '/mastermind/realsense/image'),
+    #         ('/realsense/image/depth_image', '/mastermind/realsense/depth_image'),
+    #         ('/realsense/image/camera_info', '/mastermind/realsense/camera_info'),
+    #         ('/realsense/image/points',      '/mastermind/realsense/points'),
+    #     ],
+    #     output='screen',
+    # )
 
     # 6. Launch RViz
-    rviz = Node(
-        package='rviz2',
-        executable='rviz2',
-        output='screen',
-        arguments=['-d', os.path.join(pkg_share, 'launch', 'mastermind.rviz')],
-    )
+    # rviz = Node(
+    #     package='rviz2',
+    #     executable='rviz2',
+    #     output='screen',
+    #     arguments=['-d', os.path.join(pkg_share, 'launch', 'mastermind.rviz')],
+    # )
 
     # 7. Static Transform Publisher
     # Connects the camera link to the world frame so data appears correctly in RViz
-    tf_publisher = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments = ['0', '0', '0', '0', '0', '0', 'world', 'realsense_d435/link'],
-        output='screen',
-    )
+    # tf_publisher = Node(
+    #     package='tf2_ros',
+    #     executable='static_transform_publisher',
+    #     arguments = ['0', '0', '0', '0', '0', '0', 'world', 'realsense_d435/link'],
+    #     output='screen',
+    # )
 
     return LaunchDescription(
-        [world_arg] + env_actions + [kortex_sim, camera_bridge, rviz, tf_publisher]
+        [world_arg] + env_actions + [
+            kortex_sim, 
+            # camera_bridge, 
+            # rviz, 
+            # tf_publisher
+            ]
     )

@@ -33,21 +33,21 @@
       </link>
     </model>
     
-    <!-- 1. The Game Board -->
+    <!-- 1. The Game Table & Board -->
     <include>
-      <uri>file://../models/gameboard.sdf</uri>
+      <uri>model://gameboard</uri>  <!-- Gazebo will find the folder automatically -->
       <name>gameboard</name>
     </include>
 
-    <!-- 2. The Cubes for the game -->
+    <!-- 2. The Cubes -->
     <include>
-      <uri>file://../models/cube.sdf</uri>
-      <name>cubes</name>
+      <uri>model://cube</uri>
+      <name>cube</name>
     </include>
 
     <!-- 3. The Camera on Stick -->
     <include>
-      <uri>file://../models/camera_mount.sdf</uri>
+      <uri>model://camera_mount</uri>
       <name>camera_system</name>
     </include>
 
