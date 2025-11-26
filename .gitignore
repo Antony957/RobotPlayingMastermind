@@ -1,6 +1,7 @@
 .config
 .bash_history
-.vscode
+.vscode/
+.vscode/*
 __pycache__/
 build/
 install/
