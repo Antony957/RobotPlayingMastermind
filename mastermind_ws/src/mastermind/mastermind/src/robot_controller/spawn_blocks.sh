@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-
 # ---------- Tunables (override via env) ----------
 WORLD="${WORLD:-empty}"
 TABLE_TOP_Z="${TABLE_TOP_Z:-0.30}"
@@ -249,6 +248,53 @@ cat > "$WHITE_SDF" <<EOF
 EOF
 
 
+# ---------- Overhead camera SDF (lab06_overhead_camera) ----------
+CAMERA_SDF="${SDF_DIR}/lab06_overhead_camera.sdf"
+cat > "$CAMERA_SDF" <<EOF
+<?xml version="1.0" ?>
+<sdf version="1.8">
+  <model name="lab06_overhead_camera">
+    <static>true</static>
+    <link name="camera_link">
+      <!-- Pose: x y z roll pitch yaw -->
+      <!-- Centered above the white plate at (0.16, 0.32), looking down -->
+      <pose>0.16 0.32 0.80 0 1.57 0</pose>
+
+      <visual name="body">
+        <geometry>
+          <box><size>0.05 0.05 0.05</size></box>
+        </geometry>
+        <material>
+          <ambient>1 0.5 0 1</ambient>
+          <diffuse>1 0.5 0 1</diffuse>
+        </material>
+      </visual>
+
+      <sensor name="overhead_camera" type="camera">
+        <pose>0 0 0 0 0 0</pose>
+        <camera>
+          <horizontal_fov>1.047</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>10.0</far>
+          </clip>
+        </camera>
+        <always_on>1</always_on>
+        <update_rate>15</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+    </link>
+  </model>
+</sdf>
+EOF
+# ----------------------------------------------------
+
+
 ensure_world
 
 
@@ -261,6 +307,7 @@ remove_model lab06_block_green
 remove_model lab06_block_purple
 remove_model lab06_block_black
 remove_model lab06_white_plate
+remove_model lab06_overhead_camera
 
 
 TABLE_CENTER_Z=$(python3 - <<PY
@@ -277,15 +324,15 @@ print(top + sz/2.0 + drop)
 PY
 )
 
-# first 4 blocks: EXACTLY your original layout
+# first 4 blocks: EXACTLY your original layout (do not change)
 call_create "$CUBE_RED_SDF"   "lab06_block_red"    "$X"  "-${SPACING}" "$BLOCK_Z"  # y = -0.08
 call_create "$CUBE_BLUE_SDF"  "lab06_block_blue"   "$X"   "0.0"        "$BLOCK_Z"  # y =  0.00
 call_create "$CUBE_YELL_SDF"  "lab06_block_yellow" "$X"   "${SPACING}" "$BLOCK_Z"  # y =  0.08
 call_create "$CUBE_GREEN_SDF" "lab06_block_green"  "$X"   "0.16"       "$BLOCK_Z"  # y =  0.16
 
-# NEW: purple & black, moved a bit closer (x=0.40) so planning is easier
-call_create "$CUBE_PURP_SDF"  "lab06_block_purple" "0.33" "0.16"       "$BLOCK_Z"  # near green
-call_create "$CUBE_BLACK_SDF" "lab06_block_black"  "0.33" "0.0"        "$BLOCK_Z"  # near blue
+# purple & black, unchanged from your script
+call_create "$CUBE_PURP_SDF"  "lab06_block_purple" "0.33" "0.16"       "$BLOCK_Z"
+call_create "$CUBE_BLACK_SDF" "lab06_block_black"  "0.33" "0.0"        "$BLOCK_Z"
 
 
 # spawn the white board so it sits ON the table (top at 0.30)
@@ -296,6 +343,11 @@ print(top - th/2.0 + 0.01)
 PY
 )
 call_create "$WHITE_SDF" "lab06_white_plate" 0.16 0.32 "$PLATE_Z"
+
+
+# spawn the overhead camera (pose is defined inside SDF)
+echo "[spawn] Spawning overhead camera..."
+call_create "$CAMERA_SDF" "lab06_overhead_camera" 0.0 0.0 0.0
 
 
 echo "[spawn] Done."
