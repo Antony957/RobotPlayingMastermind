@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import threading
 import time
 from typing import List
@@ -46,6 +48,11 @@ class Mastermind(Node):
         try:
             spin_thread = threading.Thread(target=executor.spin, daemon=True)
             spin_thread.start()
+
+            self.get_logger().info("Adding scene...")
+            self.pick_and_place.add_scene()
+            time.sleep(3)
+            self.get_logger().info("Adding scene completed")
 
             # Wait until we have enough subscribers to submit_code
             # (i.e., that GameState is active)
