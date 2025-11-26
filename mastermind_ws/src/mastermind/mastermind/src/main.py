@@ -9,7 +9,7 @@ from rclpy.node import Node
 from mastermind_interfaces.msg import Code
 
 from .game_state.game_state import COLOR_TO_NUM, GameState
-# from .robot_controller.pick_and_place import PickAndPlaceNode
+from .robot_controller.pick_and_place import PickAndPlaceNode
 
 
 class Mastermind(Node):
