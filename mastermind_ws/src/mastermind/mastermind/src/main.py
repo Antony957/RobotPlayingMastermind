@@ -56,11 +56,12 @@ class Mastermind(Node):
             code = [COLOR_TO_NUM[c] for c in secret_list]
             self.publish_code(code)
 
-            # For now we keep this process running for 5 seconds.
-            time.sleep(5)
+            self.get_logger().info("Mastermind running. Press Ctrl+C to exit.")
+            while rclpy.ok():
+                time.sleep(0.1)
 
         except KeyboardInterrupt:
-            pass
+            self.get_logger().info("KeyboardInterrupt received. Shutting down...")
         finally:
             executor.shutdown()
             spin_thread.join(timeout=1.0)
