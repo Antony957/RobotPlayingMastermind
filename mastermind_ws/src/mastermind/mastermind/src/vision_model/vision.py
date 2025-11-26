@@ -30,7 +30,7 @@ class VisionNode(Node):
     Vision node for Mastermind game.
     Detects 6 possible colors using HSV.
     Strictly requires exactly 4 detected blocks.
-    Listens for Status(status=4) -> Publishes Code(player_name, code).
+    Listens for Status(status=3) -> Publishes Code(player_name, code).
     """
 
     ERROR_INDEX = 255
@@ -115,9 +115,9 @@ class VisionNode(Node):
     def _status_callback(self, msg: Status) -> None:
         """
         Callback for /game_status.
-        Wait for status == 4 to trigger scan.
+        Wait for status == 3 to trigger scan.
         """
-        if msg.status == 4:
+        if msg.status == 3:
             if self.latest_image is not None:
                 self.get_logger().info(
                     f"Received Status 4 from '{msg.sender}'. Scanning..."
