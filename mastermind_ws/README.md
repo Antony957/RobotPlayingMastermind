@@ -15,7 +15,7 @@ Open a total of 5 terminal panes. To start, in each pane:
 ```bash
 cd /root/workspaces/mastermind_ws
 source /opt/ros/$ROS_DISTRO/setup.bash
-source /install/setup.bash
+source ./install/setup.bash
 ```
 
 ### Pane 1: Start Gazebo

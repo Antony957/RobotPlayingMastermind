@@ -90,12 +90,13 @@ class PickAndPlaceNode(Node):
 
         # block poses MUST match your spawn_blocks.sh
         self.blocks_xyz = [
-            (block_x, -0.08, self.block_center_z),  # block_1: RED
-            (block_x, 0.00, self.block_center_z),  # block_2: BLUE
-            (block_x, 0.08, self.block_center_z),  # block_3: YELLOW
-            (block_x, 0.16, self.block_center_z),  # block_4: GREEN
-            (0.33, 0.16, self.block_center_z),  # block_5: PURPLE
-            (0.33, 0.00, self.block_center_z),  # block_6: BLACK
+            (0.33, -0.08, self.block_center_z),  # block_1: RED
+            (0.33, 0.0, self.block_center_z),  # block_5: PURPLE
+            (0.33, -0.16, self.block_center_z),  # block_6: BLACK
+            (0.45, 0.00, self.block_center_z),  # block_2: BLUE
+            (0.45, -0.08, self.block_center_z),  # block_3: YELLOW
+            (0.45, -0.16, self.block_center_z),  # block_4: GREEN
+
         ]
 
         # UPDATED drop spots you already tuned

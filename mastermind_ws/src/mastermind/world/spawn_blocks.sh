@@ -325,14 +325,15 @@ PY
 )
 
 # first 4 blocks: EXACTLY your original layout (do not change)
-call_create "$CUBE_RED_SDF"   "lab06_block_red"    "$X"  "-${SPACING}" "$BLOCK_Z"  # y = -0.08
-call_create "$CUBE_BLUE_SDF"  "lab06_block_blue"   "$X"   "0.0"        "$BLOCK_Z"  # y =  0.00
-call_create "$CUBE_YELL_SDF"  "lab06_block_yellow" "$X"   "${SPACING}" "$BLOCK_Z"  # y =  0.08
-call_create "$CUBE_GREEN_SDF" "lab06_block_green"  "$X"   "0.16"       "$BLOCK_Z"  # y =  0.16
+
+call_create "$CUBE_BLUE_SDF"  "lab06_block_blue"   "0.45" "0.0"        "$BLOCK_Z"  # y =  0.00
+call_create "$CUBE_YELL_SDF"  "lab06_block_yellow" "0.45" "-0.08"       "$BLOCK_Z"  # y =  0.08
+call_create "$CUBE_GREEN_SDF" "lab06_block_green"  "0.45" "-0.16"       "$BLOCK_Z"  # y =  0.16
 
 # purple & black, unchanged from your script
-call_create "$CUBE_PURP_SDF"  "lab06_block_purple" "0.33" "0.16"       "$BLOCK_Z"
-call_create "$CUBE_BLACK_SDF" "lab06_block_black"  "0.33" "0.0"        "$BLOCK_Z"
+call_create "$CUBE_RED_SDF"   "lab06_block_red"    "0.33" "-0.08"       "$BLOCK_Z"  # y = -0.08
+call_create "$CUBE_PURP_SDF"  "lab06_block_purple" "0.33" "0.0"       "$BLOCK_Z"
+call_create "$CUBE_BLACK_SDF" "lab06_block_black"  "0.33" "-0.16"        "$BLOCK_Z"
 
 
 # spawn the white board so it sits ON the table (top at 0.30)

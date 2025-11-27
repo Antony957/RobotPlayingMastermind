@@ -31,13 +31,26 @@ class Mastermind(Node):
         # Pub/subs
         self.code_pub = self.create_publisher(Code, "submit_code", 10)
 
+
+    def check_secret(self, secret):
+        if not secret:
+            raise ValueError(f"No secret provided!")
+        
+        secret_list = [s for s in secret.split() if s]
+        if len(secret_list) != len(set(secret_list)):
+            raise ValueError(f"Secret must contain 4 different colors!")
+        
+        allowed = {'blue', 'yellow', 'green', 'red', 'purple', 'black'}
+        invalid = [c for c in secret_list if c not in allowed]
+        if invalid:
+            raise ValueError("Colors must be four of this list: 'blue', 'yellow', 'green', 'red', 'purple', 'black'")
+        return secret_list
+    
+
     def run(self):
         secret = self.get_parameter("secret").get_parameter_value().string_value
-
-        # Make sure we don't forget to pass in secret
-        if not secret:
-            self.get_logger().error("No secret code provided!")
-            return
+        
+        secret_list = self.check_secret(secret)
 
         executor = MultiThreadedExecutor(num_threads=3)
         executor.add_node(self)
@@ -48,7 +61,6 @@ class Mastermind(Node):
         try:
             spin_thread = threading.Thread(target=executor.spin, daemon=True)
             spin_thread.start()
-
             self.get_logger().info("Adding scene...")
             self.pick_and_place.add_scene()
             time.sleep(3)
@@ -61,7 +73,6 @@ class Mastermind(Node):
                 self.get_logger().info("Waiting for /submit_code subscriber...")
                 time.sleep(0.1)
 
-            secret_list = secret.split(" ")
             code = [COLOR_TO_NUM[c] for c in secret_list]
             self.publish_code(code)
 
