@@ -91,12 +91,11 @@ class PickAndPlaceNode(Node):
         # block poses MUST match your spawn_blocks.sh
         self.blocks_xyz = [
             (0.33, -0.08, self.block_center_z),  # block_1: RED
+            (0.45, -0.16, self.block_center_z),  # block_2: GREEN
+            (0.45, 0.00, self.block_center_z),  # block_3: BLUE
+            (0.45, -0.08, self.block_center_z),  # block_4: YELLOW
             (0.33, 0.0, self.block_center_z),  # block_5: PURPLE
             (0.33, -0.16, self.block_center_z),  # block_6: BLACK
-            (0.45, 0.00, self.block_center_z),  # block_2: BLUE
-            (0.45, -0.08, self.block_center_z),  # block_3: YELLOW
-            (0.45, -0.16, self.block_center_z),  # block_4: GREEN
-
         ]
 
         # UPDATED drop spots you already tuned
@@ -172,25 +171,25 @@ class PickAndPlaceNode(Node):
 
         # ---------------- RESPAWN SUPPORT ----------------
         # spawn_blocks.sh writes SDFs here
-        self.sdf_dir = "/tmp/lab06_spawn"
-        self.color_to_sdf = {
-            "red": os.path.join(self.sdf_dir, "cube_red.sdf"),
-            "blue": os.path.join(self.sdf_dir, "cube_blue.sdf"),
-            "yellow": os.path.join(self.sdf_dir, "cube_yellow.sdf"),
-            "green": os.path.join(self.sdf_dir, "cube_green.sdf"),
-            "purple": os.path.join(self.sdf_dir, "cube_purple.sdf"),
-            "black": os.path.join(self.sdf_dir, "cube_black.sdf"),
-        }
+        # self.sdf_dir = "/tmp/lab06_spawn"
+        # self.color_to_sdf = {
+        #     "red": os.path.join(self.sdf_dir, "cube_red.sdf"),
+        #     "blue": os.path.join(self.sdf_dir, "cube_blue.sdf"),
+        #     "yellow": os.path.join(self.sdf_dir, "cube_yellow.sdf"),
+        #     "green": os.path.join(self.sdf_dir, "cube_green.sdf"),
+        #     "purple": os.path.join(self.sdf_dir, "cube_purple.sdf"),
+        #     "black": os.path.join(self.sdf_dir, "cube_black.sdf"),
+        # }
 
         # Gazebo base model names from spawn_blocks.sh
-        self.color_to_gz_base = {
-            "red": "lab06_block_red",
-            "blue": "lab06_block_blue",
-            "yellow": "lab06_block_yellow",
-            "green": "lab06_block_green",
-            "purple": "lab06_block_purple",
-            "black": "lab06_block_black",
-        }
+        # self.color_to_gz_base = {
+        #     "red": "lab06_block_red",
+        #     "blue": "lab06_block_blue",
+        #     "yellow": "lab06_block_yellow",
+        #     "green": "lab06_block_green",
+        #     "purple": "lab06_block_purple",
+        #     "black": "lab06_block_black",
+        # }
 
         # Original pickup xyz per color (use same x,y each time)
         self.color_spawn_xyz = {c: self.blocks_xyz[i] for c, i in COLOR_TO_NUM.items()}
@@ -199,15 +198,15 @@ class PickAndPlaceNode(Node):
         # Start with original block_1..block_6 IDs
         self.color_pick_queue = {
             "red": ["block_1"],
-            "blue": ["block_2"],
-            "yellow": ["block_3"],
-            "green": ["block_4"],
+            "green": ["block_2"],
+            "blue": ["block_3"],
+            "yellow": ["block_4"],
             "purple": ["block_5"],
             "black": ["block_6"],
         }
 
         # Counter to make unique respawned names
-        self.spawn_counter = {c: 1 for c in COLOR_TO_NUM.keys()}
+        # self.spawn_counter = {c: 1 for c in COLOR_TO_NUM.keys()}
 
         # detect gz long-flag support (like your spawn script)
         self.gz_use_long_flags = self._gz_has_long_flags()
@@ -231,7 +230,7 @@ class PickAndPlaceNode(Node):
 
         self.get_logger().info(f"Arm received {code} from {player_name}!")
 
-        if player_name == "player_1":
+        if player_name != "player_2":
             return
 
         self.get_logger().info("Starting pick and place...")
@@ -239,7 +238,12 @@ class PickAndPlaceNode(Node):
         # Turn numeric code to string and pass to pick and place method
         colors = [NUM_TO_COLOR[c] for c in code]
         colors_str = " ".join(colors)
-        self.task_place_by_color(colors_str)
+        threading.Thread(
+            target = self.task_place_by_color,
+            args=(colors_str,),
+            daemon=True
+        ).start()
+        
 
     def publish_game_status(self, status: int):
         """
@@ -281,98 +285,98 @@ class PickAndPlaceNode(Node):
         except Exception:
             return True
 
-    def _gazebo_spawn(
-        self, sdf_path: str, model_name: str, x: float, y: float, z: float
-    ):
-        payload = (
-            f'sdf_filename: "{sdf_path}"\n'
-            f'name: "{model_name}"\n'
-            f"pose {{ position {{ x: {x} y: {y} z: {z} }} }}\n"
-            f"allow_renaming: false\n"
-        )
+    # def _gazebo_spawn(
+    #     self, sdf_path: str, model_name: str, x: float, y: float, z: float
+    # ):
+    #     payload = (
+    #         f'sdf_filename: "{sdf_path}"\n'
+    #         f'name: "{model_name}"\n'
+    #         f"pose {{ position {{ x: {x} y: {y} z: {z} }} }}\n"
+    #         f"allow_renaming: false\n"
+    #     )
 
-        if self.gz_use_long_flags:
-            cmd = [
-                "gz",
-                "service",
-                "-s",
-                f"/world/{self.world_name}/create",
-                "--reqtype",
-                "gz.msgs.EntityFactory",
-                "--reptype",
-                "gz.msgs.Boolean",
-                "--timeout",
-                "3000",
-                "--req",
-                payload,
-            ]
-        else:
-            cmd = [
-                "gz",
-                "service",
-                "-s",
-                f"/world/{self.world_name}/create",
-                "-m",
-                "gz.msgs.EntityFactory",
-                "-r",
-                "gz.msgs.Boolean",
-                "-t",
-                "3000",
-                "-p",
-                payload,
-            ]
+    #     if self.gz_use_long_flags:
+    #         cmd = [
+    #             "gz",
+    #             "service",
+    #             "-s",
+    #             f"/world/{self.world_name}/create",
+    #             "--reqtype",
+    #             "gz.msgs.EntityFactory",
+    #             "--reptype",
+    #             "gz.msgs.Boolean",
+    #             "--timeout",
+    #             "3000",
+    #             "--req",
+    #             payload,
+    #         ]
+    #     else:
+    #         cmd = [
+    #             "gz",
+    #             "service",
+    #             "-s",
+    #             f"/world/{self.world_name}/create",
+    #             "-m",
+    #             "gz.msgs.EntityFactory",
+    #             "-r",
+    #             "gz.msgs.Boolean",
+    #             "-t",
+    #             "3000",
+    #             "-p",
+    #             payload,
+    #         ]
 
-        try:
-            subprocess.run(
-                cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-            self.get_logger().info(
-                f"[respawn] Spawned {model_name} at ({x:.3f},{y:.3f},{z:.3f})"
-            )
-        except Exception as e:
-            self.get_logger().warn(
-                f"[respawn] Gazebo spawn failed for {model_name}: {e}"
-            )
+    #     try:
+    #         subprocess.run(
+    #             cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    #         )
+    #         self.get_logger().info(
+    #             f"[respawn] Spawned {model_name} at ({x:.3f},{y:.3f},{z:.3f})"
+    #         )
+    #     except Exception as e:
+    #         self.get_logger().warn(
+    #             f"[respawn] Gazebo spawn failed for {model_name}: {e}"
+    #         )
 
-    def _respawn_color(self, color: str):
-        if color not in self.color_to_sdf:
-            return
+    # def _respawn_color(self, color: str):
+    #     if color not in self.color_to_sdf:
+    #         return
 
-        # use original x,y from pickup spot
-        x, y, _ = self.color_spawn_xyz[color]
+    #     # use original x,y from pickup spot
+    #     x, y, _ = self.color_spawn_xyz[color]
 
-        # Gazebo needs the real world Z (~0.33) from your spawn script
-        gz_z = self.gz_block_center_z
+    #     # Gazebo needs the real world Z (~0.33) from your spawn script
+    #     gz_z = self.gz_block_center_z
 
-        sdf = self.color_to_sdf[color]
-        base = self.color_to_gz_base[color]
+    #     sdf = self.color_to_sdf[color]
+    #     base = self.color_to_gz_base[color]
 
-        k = self.spawn_counter[color]
-        self.spawn_counter[color] += 1
+    #     k = self.spawn_counter[color]
+    #     self.spawn_counter[color] += 1
 
-        gz_name = f"{base}_{k}"
-        moveit_id = f"{color}_respawn_{k}"
+    #     gz_name = f"{base}_{k}"
+    #     moveit_id = f"{color}_respawn_{k}"
 
-        # 1) Spawn in Gazebo with unique name
-        self._gazebo_spawn(sdf, gz_name, x, y, gz_z)
+    #     # 1) Spawn in Gazebo with unique name
+    #     self._gazebo_spawn(sdf, gz_name, x, y, gz_z)
 
-        # 2) Add collision box to MoveIt at your planning Z (keep consistent)
-        self.moveit2.add_collision_box(
-            id=moveit_id,
-            size=(0.04, 0.04, 0.04),
-            position=(x, y, self.block_center_z),
-            quat_xyzw=(0, 0, 0, 1),
-            frame_id="base_link",
-        )
-        time.sleep(0.05)
+    #     # 2) Add collision box to MoveIt at your planning Z (keep consistent)
+    #     self.moveit2.add_collision_box(
+    #         id=moveit_id,
+    #         size=(0.04, 0.04, 0.04),
+    #         position=(x, y, self.block_center_z),
+    #         quat_xyzw=(0, 0, 0, 1),
+    #         frame_id="base_link",
+    #     )
+    #     time.sleep(0.05)
 
-        # 3) Queue it for future picks
-        self.color_pick_queue[color].append(moveit_id)
-        self.get_logger().info(f"[respawn] Ready next {color}: {moveit_id}")
+    #     # 3) Queue it for future picks
+    #     self.color_pick_queue[color].append(moveit_id)
+    #     self.get_logger().info(f"[respawn] Ready next {color}: {moveit_id}")
 
     # ---------------------- utils ----------------------
     def move_to_joints(self, joints):
-        self.get_logger().info("Move to joints")
+        self.get_logger().info("Move to joints" + str(joints))
         self.moveit2.move_to_configuration(joint_positions=joints)
         self.moveit2.wait_until_executed()
 
@@ -429,14 +433,19 @@ class PickAndPlaceNode(Node):
     def add_scene(self):
         self.get_logger().info("Adding objects to the planning scene.")
 
-        self.moveit2.add_collision_box(
-            id="table_top",
-            size=(1.0, 1.0, 0.05),
-            position=(0.0, 0.0, self.table_center_z),
-            quat_xyzw=(0, 0, 0, 1),
-            frame_id="base_link",
-        )
-        time.sleep(0.1)
+        # self.moveit2.add_collision_box(
+        #     id="table_top",
+        #     size=(1.0, 1.0, 0.05),
+        #     position=(0.0, 0.0, self.table_center_z),
+        #     quat_xyzw=(0, 0, 0, 1),
+        #     frame_id="base_link",
+        # )
+        # time.sleep(0.1)
+        # self.moveit2.set_allowed_collisions(
+        #     "table_top",
+        #     ["right_finger_bottom_link", "left_finger_bottom_link"],
+        #     allowed=True,
+        # )
 
         for i, (x, y, z) in enumerate(self.blocks_xyz, start=1):
             self.moveit2.add_collision_box(
@@ -549,7 +558,7 @@ class PickAndPlaceNode(Node):
             time.sleep(0.1)
 
             # Respawn same color on the Gazebo table + add to MoveIt queue
-            self._respawn_color(color)
+            # self._respawn_color(color)
 
             _ = self.move_to_pose(pre_drop, cartesian=True)
 
@@ -572,36 +581,36 @@ class PickAndPlaceNode(Node):
         self.add_scene()
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = PickAndPlaceNode()
-    executor = MultiThreadedExecutor(num_threads=2)
-    executor.add_node(node)
-    threading.Thread(target=executor.spin, daemon=True).start()
+# def main(args=None):
+#     rclpy.init(args=args)
+#     node = PickAndPlaceNode()
+#     executor = MultiThreadedExecutor(num_threads=2)
+#     executor.add_node(node)
+#     threading.Thread(target=executor.spin, daemon=True).start()
 
-    task = node.get_parameter("task").get_parameter_value().string_value
-    node.get_logger().info(f"Executing task: '{task}'")
+#     task = node.get_parameter("task").get_parameter_value().string_value
+#     node.get_logger().info(f"Executing task: '{task}'")
 
-    try:
-        if task == "home":
-            node.task_home()
-        elif task == "retract":
-            node.task_retract()
-        elif task == "add_scene":
-            node.task_add_scene()
-        elif task == "place_by_color":
-            node.task_place_by_color()
-        else:
-            node.get_logger().warn(
-                f"Unknown task '{task}'. Valid: home, retract, add_scene, place_by_color"
-            )
-    finally:
-        time.sleep(1)
-        try:
-            rclpy.shutdown()
-        except Exception:
-            pass
+#     try:
+#         if task == "home":
+#             node.task_home()
+#         elif task == "retract":
+#             node.task_retract()
+#         elif task == "add_scene":
+#             node.task_add_scene()
+#         elif task == "place_by_color":
+#             node.task_place_by_color()
+#         else:
+#             node.get_logger().warn(
+#                 f"Unknown task '{task}'. Valid: home, retract, add_scene, place_by_color"
+#             )
+#     finally:
+#         time.sleep(1)
+#         try:
+#             rclpy.shutdown()
+#         except Exception:
+#             pass
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

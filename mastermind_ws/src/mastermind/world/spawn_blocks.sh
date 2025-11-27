@@ -30,7 +30,7 @@ BLOCK_MAX_VEL="${BLOCK_MAX_VEL:-0.10}"
 
 ALLOW_RENAME="${ALLOW_RENAME:-false}"
 SWEEP_SUFFIXES="${SWEEP_SUFFIXES:-true}"
-MAX_SUFFIX="${MAX_SUFFIX:-9}"
+MAX_SUFFIX="${MAX_SUFFIX:-1}"
 WORLD_SDF="${WORLD_SDF:-/tmp/lab06_empty_usercmd.world.sdf}"
 # -------------------------------------------------
 
@@ -248,66 +248,125 @@ cat > "$WHITE_SDF" <<EOF
 EOF
 
 
-# ---------- Overhead camera SDF (lab06_overhead_camera) ----------
-CAMERA_SDF="${SDF_DIR}/lab06_overhead_camera.sdf"
+# # ---------- Overhead camera SDF (lab06_overhead_camera) ----------
+# CAMERA_SDF="${SDF_DIR}/lab06_overhead_camera.sdf"
+# cat > "$CAMERA_SDF" <<EOF
+# <?xml version="1.0" ?>
+# <sdf version="1.8">
+#   <model name="lab06_overhead_camera">
+#     <static>true</static>
+#     <link name="camera_link">
+#       <!-- Pose: x y z roll pitch yaw -->
+#       <!-- Centered above the white plate at (0.16, 0.32), looking down -->
+#       <pose>0.16 0.32 0.80 0 1.57 0</pose>
+
+#       <visual name="body">
+#         <geometry>
+#           <box><size>0.05 0.05 0.05</size></box>
+#         </geometry>
+#         <material>
+#           <ambient>1 0.5 0 1</ambient>
+#           <diffuse>1 0.5 0 1</diffuse>
+#         </material>
+#       </visual>
+
+#       <sensor name="overhead_camera" type="camera">
+#         <pose>0 0 0 0 0 0</pose>
+#         <camera>
+#           <horizontal_fov>1.047</horizontal_fov>
+#           <image>
+#             <width>640</width>
+#             <height>480</height>
+#             <format>R8G8B8</format>
+#           </image>
+#           <clip>
+#             <near>0.1</near>
+#             <far>10.0</far>
+#           </clip>
+#         </camera>
+#         <always_on>1</always_on>
+#         <update_rate>15</update_rate>
+#         <visualize>true</visualize>
+#       </sensor>
+#     </link>
+#   </model>
+# </sdf>
+# EOF
+# # ----------------------------------------------------
+
+#camera stick, black
+STICK_SDF="${SDF_DIR}/mastermind_camera_stick.sdf"
+cat > "$STICK_SDF" <<EOF
+<?xml version="1.0" ?>
+<sdf version="1.8">
+  <model name="mastermind_camera_stick">
+    <static>true</static>
+    <link name="stick">
+      <pose>0.6 0.32 0 0 0 0</pose>
+      
+      <visual name="visual">
+        <pose>0 0 0.3 0 0 0</pose>
+        <geometry><cylinder><radius>0.02</radius><length>0.6</length></cylinder></geometry>
+        <material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material>
+      </visual>
+      
+      <collision name="col">
+        <pose>0 0 0.3 0 0 0</pose>
+        <geometry><cylinder><radius>0.02</radius><length>0.6</length></cylinder></geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>
+EOF
+
+
+# camera, orange
+CAMERA_SDF="${SDF_DIR}/camera_box.sdf"
 cat > "$CAMERA_SDF" <<EOF
 <?xml version="1.0" ?>
 <sdf version="1.8">
-  <model name="lab06_overhead_camera">
+  <model name="mastermind_camera_box">
     <static>true</static>
+    
     <link name="camera_link">
-      <!-- Pose: x y z roll pitch yaw -->
-      <!-- Centered above the white plate at (0.16, 0.32), looking down -->
-      <pose>0.16 0.32 0.80 0 1.57 0</pose>
-
-      <visual name="body">
-        <geometry>
-          <box><size>0.05 0.05 0.05</size></box>
-        </geometry>
-        <material>
-          <ambient>1 0.5 0 1</ambient>
-          <diffuse>1 0.5 0 1</diffuse>
-        </material>
+      <pose>0.6 0.32 0.6 0.0 0.7 3.1415</pose>
+      
+      <visual name="visual">
+        <geometry><box><size>0.025 0.09 0.025</size></box></geometry>
+        <material><ambient>1 0.5 0 1</ambient><diffuse>1 0.5 0 1</diffuse></material>
       </visual>
 
-      <sensor name="overhead_camera" type="camera">
-        <pose>0 0 0 0 0 0</pose>
+      <sensor name="mastermind_camera" type="camera">
+        <pose>0.02 0 0 0 0 0</pose>
         <camera>
           <horizontal_fov>1.047</horizontal_fov>
-          <image>
-            <width>640</width>
-            <height>480</height>
-            <format>R8G8B8</format>
-          </image>
-          <clip>
-            <near>0.1</near>
-            <far>10.0</far>
-          </clip>
+          <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.1</near><far>10</far></clip>
         </camera>
         <always_on>1</always_on>
-        <update_rate>15</update_rate>
+        <update_rate>1</update_rate>
         <visualize>true</visualize>
+        <topic>mastermind/camera/image_raw</topic>
       </sensor>
     </link>
   </model>
 </sdf>
 EOF
-# ----------------------------------------------------
 
 
 ensure_world
 
 
-echo "[spawn] Cleaning up previous lab06 entities…"
-remove_model lab06_table
-remove_model lab06_block_red
-remove_model lab06_block_blue
-remove_model lab06_block_yellow
-remove_model lab06_block_green
-remove_model lab06_block_purple
-remove_model lab06_block_black
-remove_model lab06_white_plate
-remove_model lab06_overhead_camera
+# echo "[spawn] Cleaning up previous lab06 entities…"
+# remove_model lab06_table
+# remove_model lab06_block_red
+# remove_model lab06_block_blue
+# remove_model lab06_block_yellow
+# remove_model lab06_block_green
+# remove_model lab06_block_purple
+# remove_model lab06_block_black
+# remove_model lab06_white_plate
+# remove_model lab06_overhead_camera
 
 
 TABLE_CENTER_Z=$(python3 - <<PY
@@ -346,9 +405,15 @@ PY
 call_create "$WHITE_SDF" "lab06_white_plate" 0.16 0.32 "$PLATE_Z"
 
 
-# spawn the overhead camera (pose is defined inside SDF)
-echo "[spawn] Spawning overhead camera..."
-call_create "$CAMERA_SDF" "lab06_overhead_camera" 0.0 0.0 0.0
+# # spawn the overhead camera (pose is defined inside SDF)
+# echo "[spawn] Spawning overhead camera..."
+# call_create "$CAMERA_SDF" "lab06_overhead_camera" 0.0 0.0 0.0
+
+echo "[spawn] Spawning Camera Stick (Black)..."
+call_create "$STICK_SDF" "mastermind_camera_stick" 0.0 0.0 0.0
+
+echo "[spawn] Spawning Camera Box (Orange)..."
+call_create "$CAMERA_SDF" "mastermind_camera_box" 0.0 0.0 0.0
 
 
 echo "[spawn] Done."

@@ -13,6 +13,8 @@ from .game_state.game_state import COLOR_TO_NUM, GameState
 from .robot_controller.pick_and_place import PickAndPlaceNode
 from .vision_model.vision import VisionNode
 
+import subprocess
+
 
 class Mastermind(Node):
     """
@@ -52,7 +54,7 @@ class Mastermind(Node):
         
         secret_list = self.check_secret(secret)
 
-        executor = MultiThreadedExecutor(num_threads=3)
+        executor = MultiThreadedExecutor(num_threads=8)
         executor.add_node(self)
         executor.add_node(self.game_state)
         executor.add_node(self.pick_and_place)
@@ -103,10 +105,46 @@ class Mastermind(Node):
         self.get_logger().info(f"Player 1 published secret {code}!")
 
 
+def start_camera_bridge(logger):
+    """
+    bridge Gazebo & ROS2
+
+      ros2 run ros_gz_bridge parameter_bridge \
+        "/mastermind/camera/image_raw@sensor_msgs/msg/Image@gz.msgs.Image"
+
+    """
+    cmd = [
+        "ros2", "run", "ros_gz_bridge", "parameter_bridge",
+        "/mastermind/camera/image_raw"
+        "@sensor_msgs/msg/Image"
+        "@gz.msgs.Image",
+    ]
+    logger.info("bridging images...")
+
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return proc
+
+
 def main():
     rclpy.init()
     mastermind = Mastermind()
-    mastermind.run()
+    bridge_proc = start_camera_bridge(mastermind.get_logger())
+    try:
+        mastermind.run()
+    finally:
+        if bridge_proc is not None:
+            try:
+                mastermind.get_logger().info("Stopping camera bridge...")
+                bridge_proc.terminate()
+                bridge_proc.wait(timeout=2.0)
+            except Exception:
+                bridge_proc.kill()
+    
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":

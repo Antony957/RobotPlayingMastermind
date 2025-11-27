@@ -143,7 +143,7 @@ class GameState(Node):
 
         # If code comes from computer_vision, check guess
         # and publish appropriate status and/or feedback for player_2
-        elif msg.player_name == "computer_vision":
+        elif msg.player_name == "VisionBot":
             self.get_logger().info(f"Code {msg.code} received from computer_vision")
 
             self.last_guess = msg.code
