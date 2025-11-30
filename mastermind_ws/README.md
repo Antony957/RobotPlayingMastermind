@@ -45,14 +45,16 @@ ros2 run mastermind main --ros-args -p secret:="red blue green yellow"
 ```
 
 ### Pane 4: Start player 2
-Start player 2 with
+
+#### Human mode
+Start player 2 in human mode with
 ```bash
-ros2 run mastermind player2
+ros2 run mastermind player2 --ros-args -p mode:=human
 ```
 
 Then we'll see
 ```
-Enter your guess (e.g. 'red blue red blue') or 'q' to quit:
+Enter your guess (e.g. 'red blue black green'):
 
 ```
 
@@ -63,3 +65,8 @@ red blue black green
 
 and so on.
 
+#### AI mode
+Start player 2 in human mode with
+```bash
+ros2 run mastermind player2 --ros-args -p mode:=ai
+```
