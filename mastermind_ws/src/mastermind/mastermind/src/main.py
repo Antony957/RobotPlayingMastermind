@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/ros_python/bin/python3
 
 import os
 import subprocess

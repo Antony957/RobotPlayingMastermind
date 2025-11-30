@@ -1,3 +1,5 @@
+#!/opt/ros_python/bin/python3
+
 import os
 import threading
 import time
