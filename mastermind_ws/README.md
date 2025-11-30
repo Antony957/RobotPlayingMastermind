@@ -5,7 +5,6 @@ We need to build `mastermind_interfaces` and `mastermind` separately. `mastermin
 
 In one terminal pane, run
 ```bash
-source /opt/ros_python/bin/activate
 cd /root/workspaces/mastermind_ws
 colcon build --symlink-install --packages-select mastermind_interfaces
 colcon build --symlink-install --packages-select mastermind
