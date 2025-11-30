@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 
+import os
+import subprocess
 import threading
 import time
 from typing import List
 
 import rclpy
-from mastermind_interfaces.msg import Code
+from mastermind_interfaces.msg import Code, Status
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 from .game_state.game_state import COLOR_TO_NUM, GameState
 from .robot_controller.pick_and_place import PickAndPlaceNode
 from .vision_model.vision import VisionNode
-
-import subprocess
 
 
 class Mastermind(Node):
@@ -32,26 +32,44 @@ class Mastermind(Node):
 
         # Pub/subs
         self.code_pub = self.create_publisher(Code, "submit_code", 10)
+        self.game_status_sub = self.create_subscription(
+            Status, "game_status", self.handle_status, 10
+        )
 
+        self.game_in_progress = False
+
+    def handle_status(self, msg: Status):
+        sender = msg.sender
+        status = msg.status
+
+        if sender == "game_state" and status == 0 and self.game_in_progress:
+            self.reset_blocks()
 
     def check_secret(self, secret):
         if not secret:
             raise ValueError(f"No secret provided!")
-        
+
         secret_list = [s for s in secret.split() if s]
         if len(secret_list) != len(set(secret_list)):
             raise ValueError(f"Secret must contain 4 different colors!")
-        
-        allowed = {'blue', 'yellow', 'green', 'red', 'purple', 'black'}
+
+        allowed = {"blue", "yellow", "green", "red", "purple", "black"}
         invalid = [c for c in secret_list if c not in allowed]
         if invalid:
-            raise ValueError("Colors must be four of this list: 'blue', 'yellow', 'green', 'red', 'purple', 'black'")
+            raise ValueError(
+                "Colors must be four of this list: 'blue', 'yellow', 'green', 'red', 'purple', 'black'"
+            )
         return secret_list
-    
+
+    def reset_blocks(self):
+        script_path = (
+            "/root/workspaces/mastermind_ws/src/mastermind/world/reset_blocks.sh"
+        )
+        subprocess.run(["bash", script_path], check=True)
 
     def run(self):
         secret = self.get_parameter("secret").get_parameter_value().string_value
-        
+
         secret_list = self.check_secret(secret)
 
         executor = MultiThreadedExecutor(num_threads=8)
@@ -78,6 +96,7 @@ class Mastermind(Node):
             code = [COLOR_TO_NUM[c] for c in secret_list]
             self.publish_code(code)
 
+            self.game_in_progress = True
             self.get_logger().info("Mastermind running. Press Ctrl+C to exit.")
             while rclpy.ok():
                 time.sleep(0.1)
@@ -114,10 +133,11 @@ def start_camera_bridge(logger):
 
     """
     cmd = [
-        "ros2", "run", "ros_gz_bridge", "parameter_bridge",
-        "/mastermind/camera/image_raw"
-        "@sensor_msgs/msg/Image"
-        "@gz.msgs.Image",
+        "ros2",
+        "run",
+        "ros_gz_bridge",
+        "parameter_bridge",
+        "/mastermind/camera/image_raw" "@sensor_msgs/msg/Image" "@gz.msgs.Image",
     ]
     logger.info("bridging images...")
 
@@ -143,7 +163,7 @@ def main():
                 bridge_proc.wait(timeout=2.0)
             except Exception:
                 bridge_proc.kill()
-    
+
     rclpy.shutdown()
 
 
