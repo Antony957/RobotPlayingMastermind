@@ -10,3 +10,13 @@
 [INFO] [1764523072.951229478] [game_state]: Player 2 got 3 colors and 2 positions correct!
 [INFO] [1764523072.969844229] [game_state]: Game status: 1 (waiting for player 2) set by game_state.
 
+
+[INFO] [1764537993.962507746] [game_state]: Incorrect guess...
+[INFO] [1764537993.980545563] [game_state]: Try again!
+[INFO] [1764537993.994960081] [game_state]: Player 2 got 3 colors and 2 positions correct!
+[reset] Deleting previous blocks...
+[reset] Respawning canonical blocks...
+[reset] Done.
+[INFO] [1764538023.999735972] [game_state]: Game status: 0 (resetting blocks) set by game_state.
+[INFO] [1764538024.015660706] [game_state]: Game status: 1 (waiting for player 2) set by game_state.
+
