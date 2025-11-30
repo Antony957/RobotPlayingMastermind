@@ -1,12 +1,12 @@
 import os
 import threading
+import time
 from typing import List
 
 import rclpy
+from mastermind_interfaces.msg import Code, GuessCheck, Status
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-
-from mastermind_interfaces.msg import Code, GuessCheck, Status
 
 NUM_TO_COLOR = {
     0: "red",
@@ -27,7 +27,7 @@ COLOR_TO_NUM = {
 }
 
 GAME_STATUS = {
-    0: "waiting to start",
+    0: "resetting blocks",
     1: "waiting for player 2",  # player 2 watches for this to make guess
     2: "waiting for robot arm",  # player 2 publishes this, robot_arm watches for this
     3: "waiting for computer_vision",  # robot_arm publishes this, CV watches for this
@@ -168,11 +168,16 @@ class GameState(Node):
                     self.get_logger().info("Player 2 loses!")
                     self.publish_game_status(5)
 
-                # Otherwise, send feedback and go to next round
+                # Otherwise, send feedback, reset, and go to next round
                 else:
                     self.get_logger().info("Try again!")
 
                     self.publish_guess_check()
+
+                    # Reset blocks and wait 30 seconds for IRL reset
+                    self.publish_game_status(0)
+                    time.sleep(30)
+
                     self.publish_game_status(1)  # "waiting for player_2"
 
     def check_guess(self):
