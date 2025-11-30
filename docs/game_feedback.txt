@@ -1,0 +1,12 @@
+[INFO] [1764523072.703253374] [pick_and_place]: Color-ordered placement complete.
+[INFO] [1764523072.729936460] [vision_node]: Received Status 3 from 'robot_arm'. Scanning...
+[INFO] [1764523072.730370386] [vision_node]: process frame
+[INFO] [1764523072.732987250] [game_state]: Game status: 3 (waiting for computer_vision) set by robot_arm.
+[INFO] [1764523072.912847985] [vision_node]: Success: ['red', 'blue', 'yellow', 'green'] -> [1, 2, 4, 3]
+[INFO] [1764523072.921662406] [pick_and_place]: Arm received [1 2 4 3] from VisionBot!
+[INFO] [1764523072.925903956] [game_state]: Code [1 2 4 3] received from computer_vision
+[INFO] [1764523072.928615798] [game_state]: Incorrect guess...
+[INFO] [1764523072.933069176] [game_state]: Try again!
+[INFO] [1764523072.951229478] [game_state]: Player 2 got 3 colors and 2 positions correct!
+[INFO] [1764523072.969844229] [game_state]: Game status: 1 (waiting for player 2) set by game_state.
+
