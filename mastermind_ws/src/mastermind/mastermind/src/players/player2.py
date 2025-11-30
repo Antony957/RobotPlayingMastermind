@@ -136,7 +136,7 @@ class Player2(Node):
                 # Ask user for input
                 user_input = input(
                     # "\nEnter your guess (e.g. 'red blue red blue') or 'q' to quit:\n"
-                    "\nEnter your guess (e.g. 'red blue red blue'):\n"
+                    "\nEnter your guess (e.g. 'red blue black green'):\n"
                 ).strip()
 
                 # if user_input.lower() in ["q", "quit", "exit"]:
