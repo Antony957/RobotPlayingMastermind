@@ -44,6 +44,7 @@ class Mastermind(Node):
 
         if sender == "game_state" and status == 0 and self.game_in_progress:
             self.reset_blocks()
+            self.pick_and_place.reset_blocks()
 
     def check_secret(self, secret):
         if not secret:
