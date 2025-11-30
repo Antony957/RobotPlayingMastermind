@@ -7,12 +7,11 @@ import time
 
 import rclpy
 from geometry_msgs.msg import Pose
+from mastermind_interfaces.msg import Code, Status
 from pymoveit2 import MoveIt2
 from pymoveit2.gripper_interface import GripperInterface
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-
-from mastermind_interfaces.msg import Code, Status
 
 from ..game_state.game_state import COLOR_TO_NUM, GAME_STATUS, NUM_TO_COLOR
 
@@ -217,6 +216,29 @@ class PickAndPlaceNode(Node):
             Code, "submit_code", self.handle_code, 10
         )
 
+    def reset_blocks(self):
+        """
+        Reset blocks in memory and MoveIt2.
+
+        The actual sh script that updates the world
+        is run by main.py
+        """
+        self.color_pick_queue = {
+            "red": ["block_1"],
+            "green": ["block_2"],
+            "blue": ["block_3"],
+            "yellow": ["block_4"],
+            "purple": ["block_5"],
+            "black": ["block_6"],
+        }
+
+        # Reset in MoveIt2 (remove collision objects and add them back in)
+        for i in range(1, 7):
+            self.moveit2.remove_collision_object(f"block_{i}")
+            time.sleep(0.02)
+
+        self.add_scene()
+
     def handle_code(self, msg: Code):
         """
         Callback for submit_code topic subscriber.
@@ -239,11 +261,8 @@ class PickAndPlaceNode(Node):
         colors = [NUM_TO_COLOR[c] for c in code]
         colors_str = " ".join(colors)
         threading.Thread(
-            target = self.task_place_by_color,
-            args=(colors_str,),
-            daemon=True
+            target=self.task_place_by_color, args=(colors_str,), daemon=True
         ).start()
-        
 
     def publish_game_status(self, status: int):
         """
