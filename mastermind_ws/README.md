@@ -33,13 +33,13 @@ ros2 launch kinova_gen3_lite_moveit_config sim.launch.py use_sim_time:=true
 ### Pane 3: Spawn world, then run game
 To spawn world (make sure we're in `/root/workspaces/mastermind_ws`):
 ```bash
-./src/mastermind/world/spawn_blocksh.sh
+./src/mastermind/world/spawn_blocks.sh
 ```
 This will take a while.
 
 When done, start game with (remember to change secret):
 ```bash
-ros2 run mastermind main --ros-args -p secret:="red blue red yellow"
+ros2 run mastermind main --ros-args -p secret:="red blue green yellow"
 ```
 
 ### Pane 4: Start player 2
@@ -56,7 +56,7 @@ Enter your guess (e.g. 'red blue red blue') or 'q' to quit:
 
 Enter valid guesses as
 ```
-red blue red blue
+red blue black green
 ```
 
 and so on.
