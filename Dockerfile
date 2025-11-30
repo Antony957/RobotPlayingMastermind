@@ -8,10 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Add more apt packages here, one per line
  && rm -rf /var/lib/apt/lists/*
 
- COPY requirements.txt .
+COPY requirements.txt .
 
-RUN python3 -m venv /opt/ros_python
-
+RUN python3 -m venv /opt/ros_python --system-site-packages
 
 # (B) Add any extra Python packages into the course's virtual environment
 RUN . /opt/ros_python/bin/activate && \
