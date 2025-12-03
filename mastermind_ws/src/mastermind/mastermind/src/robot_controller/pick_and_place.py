@@ -38,8 +38,9 @@ class PickAndPlaceNode(Node):
         self.declare_parameter("close_wait_sec", 1.2)
         self.declare_parameter("open_wait_sec", 0.4)
 
+        # TODO: Calibrate
         # extra release clearance above plate to avoid tilted block clipping through
-        self.declare_parameter("place_clearance", 0.02)  # 2 cm
+        self.declare_parameter("place_clearance", 0.01)  # 1 cm
 
         # Gazebo world name (spawn uses "empty")
         self.declare_parameter("world", "empty")
@@ -105,8 +106,9 @@ class PickAndPlaceNode(Node):
             (0.20, 0.42),
         ]
 
+        # TODO: Calibrate IRL
         self.approach_height = 0.32
-        self.grasp_height = 0.19
+        self.grasp_height = 0.185
 
         # placing height lifted to match plate being higher/thicker
         self.plate_height_offset = (
@@ -151,22 +153,7 @@ class PickAndPlaceNode(Node):
         self.block_size = block_size
         self.release_up_dz = 0.03
 
-        # ---------------- GRIPPER SETUP ----------------
-        action_name = self._auto_find_gripper_action()
-        self.get_logger().info(f"Using gripper action: {action_name}")
-
-        try:
-            self.gripper = GripperInterface(
-                node=self,
-                gripper_joint_names=["right_finger_bottom_joint"],
-                open_gripper_joint_positions=[0.75],
-                closed_gripper_joint_positions=[0.00],
-                gripper_command_action_name=action_name,
-                ignore_new_calls_while_executing=False,
-            )
-        except Exception as e:
-            self.get_logger().warn(f"GripperInterface initialization failed: {e}")
-            self.gripper = None
+        self.setup_gripper() 
 
         # ---------------- RESPAWN SUPPORT ----------------
         # spawn_blocks.sh writes SDFs here
@@ -216,6 +203,28 @@ class PickAndPlaceNode(Node):
             Code, "submit_code", self.handle_code, 10
         )
 
+    def setup_gripper(self):
+        """
+        Set up gripper interface. This is called once during initialization
+        and once every time we reset (for next round)
+        """
+        # ---------------- GRIPPER SETUP ----------------
+        action_name = self._auto_find_gripper_action()
+        self.get_logger().info(f"Using gripper action: {action_name}")
+
+        try:
+            self.gripper = GripperInterface(
+                node=self,
+                gripper_joint_names=["right_finger_bottom_joint"],
+                open_gripper_joint_positions=[0.75],
+                closed_gripper_joint_positions=[0.38],
+                gripper_command_action_name=action_name,
+                ignore_new_calls_while_executing=False,
+            )
+        except Exception as e:
+            self.get_logger().warn(f"GripperInterface initialization failed: {e}")
+            self.gripper = None
+
     def reset_blocks(self):
         """
         Reset blocks in memory and MoveIt2.
@@ -223,6 +232,8 @@ class PickAndPlaceNode(Node):
         The actual sh script that updates the world
         is run by main.py
         """
+        self.setup_gripper()
+
         self.color_pick_queue = {
             "red": ["block_1"],
             "green": ["block_2"],
