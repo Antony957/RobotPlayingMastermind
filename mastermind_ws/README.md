@@ -19,15 +19,26 @@ source ./install/setup.bash
 ```
 
 ### Pane 1: Start Gazebo
-
+For simulation:
 ```bash
 ros2 launch kortex_bringup kortex_sim_control.launch.py sim_gazebo:=true robot_type:=gen3_lite gripper:=gen3_lite_2f robot_name:=gen3_lite dof:=6 use_sim_time:=true launch_rviz:=false robot_controller:=joint_trajectory_controller
 ```
 
-### Pane 2: Start RViz
+For physical implementation:
+```bash
+ros2 launch kortex_bringup gen3_lite.launch.py robot_ip:=192.168.1.10 gripper:=gen3_lite_2f launch_rviz:=false
+```
 
+### Pane 2: Start RViz
+For simulation:
 ```bash
 ros2 launch kinova_gen3_lite_moveit_config sim.launch.py use_sim_time:=true
+```
+
+For physical implementation:
+
+```bash
+ros2 launch kinova_gen3_lite_moveit_config robot.launch.py robot_ip:=192.168.1.10 launch_driver:=false launch_rviz:=true
 ```
 
 ### Pane 3: Spawn world, then run game
