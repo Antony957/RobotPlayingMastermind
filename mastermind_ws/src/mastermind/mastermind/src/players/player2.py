@@ -75,8 +75,8 @@ Output your guess in JSON format.
 
         parsed: ResponseFormat = response.output_parsed
 
-        guess_list = [g.value for g in parsed.guess]
-        return guess_list
+        # guess_list = [g.value for g in parsed.guess]
+        return parsed.reasoning, [g.value for g in parsed.guess]
 
 
 
@@ -155,7 +155,9 @@ class Player2(Node):
 
     def ai_loop(self):
         while not self.stop_flag:
-            color_list = self.client.guess()
+            reasoning, color_list = self.client.guess()
+            self.get_logger().info(reasoning)
+            self.get_logger().info(f"We are going to guess list {str(color_list)}")
             self.check_and_publish_color(color_list)
 
 
