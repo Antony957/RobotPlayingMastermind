@@ -40,7 +40,7 @@ class PickAndPlaceNode(Node):
 
         # TODO: Calibrate
         # extra release clearance above plate to avoid tilted block clipping through
-        self.declare_parameter("place_clearance", 0.01)  # 1 cm
+        self.declare_parameter("place_clearance", 0.001)  # 1 cm
 
         # Gazebo world name (spawn uses "empty")
         self.declare_parameter("world", "empty")
@@ -106,9 +106,9 @@ class PickAndPlaceNode(Node):
             (0.20, 0.42),
         ]
 
-        # TODO: Calibrate IRL
-        self.approach_height = 0.32
-        self.grasp_height = 0.185
+        # TODO: Calibrate IR
+        self.approach_height = 0.2
+        self.grasp_height = 0.13
 
         # placing height lifted to match plate being higher/thicker
         self.plate_height_offset = (
@@ -216,8 +216,8 @@ class PickAndPlaceNode(Node):
             self.gripper = GripperInterface(
                 node=self,
                 gripper_joint_names=["right_finger_bottom_joint"],
-                open_gripper_joint_positions=[0.75],
-                closed_gripper_joint_positions=[0.38],
+                open_gripper_joint_positions=[0.41],
+                closed_gripper_joint_positions=[0.75],
                 gripper_command_action_name=action_name,
                 ignore_new_calls_while_executing=False,
             )
@@ -232,6 +232,7 @@ class PickAndPlaceNode(Node):
         The actual sh script that updates the world
         is run by main.py
         """
+        self.get_logger().info("Resetting blocks")
         self.setup_gripper()
 
         self.color_pick_queue = {
@@ -488,7 +489,7 @@ class PickAndPlaceNode(Node):
             time.sleep(0.05)
 
         self.get_logger().info("Planning scene has been set up.")
-
+    
     # -------------------- place by color order (supports duplicates + respawn) --------------------
     def task_place_by_color(self, order_str=None):
         if order_str is None:
@@ -544,18 +545,22 @@ class PickAndPlaceNode(Node):
                 self.place_height + self.place_clearance,
                 *self.top_down_orientation,
             )
-
+            self.get_logger().info(f"Going to pre pick")
             if not self.move_to_pose(pre_pick):
                 self.get_logger().error(f"Could not go above {block_id}")
                 return
+            
+            self.get_logger().info(f"Going to pick pose")
+
             if not self.move_to_pose(pick_pose, cartesian=True):
                 self.get_logger().error(f"Could not descend to {block_id}")
                 return
 
-            squat_pose = make_pose(
-                pick_x, pick_y, self.grasp_height - 0.002, *self.top_down_orientation
-            )
-            _ = self.move_to_pose(squat_pose, cartesian=True)
+            # squat_pose = make_pose(
+            #     pick_x, pick_y, self.grasp_height - 0.002, *self.top_down_orientation
+            # )
+            # _ = self.move_to_pose(squat_pose, cartesian=True)
+            self.get_logger().info(f"Closing gripper")
 
             ok = self.close_gripper()
             time.sleep(0.1)
@@ -566,14 +571,18 @@ class PickAndPlaceNode(Node):
             )
 
             time.sleep(self.close_wait_sec)
+            self.get_logger().info(f"Going to pre pick")
 
             if not self.move_to_pose(pre_pick, cartesian=True):
                 self.get_logger().error(f"Could not lift {block_id}")
                 return
+            self.get_logger().info(f"Going to pre drop")
 
             if not self.move_to_pose(pre_drop):
                 self.get_logger().error(f"Could not move above drop for {block_id}")
                 return
+            self.get_logger().info(f"Going to drop place")
+
             if not self.move_to_pose(drop_pose, cartesian=True):
                 self.get_logger().error(f"Could not descend to drop for {block_id}")
                 return
