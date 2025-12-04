@@ -42,7 +42,9 @@ class Mastermind(Node):
         sender = msg.sender
         status = msg.status
 
-        if sender == "game_state" and status == 0 and self.game_in_progress:
+        self.get_logger().info(f"Sender {sender} status {status}")
+
+        if sender == "game_state" and status == 0 :
             self.reset_blocks()
             self.pick_and_place.reset_blocks()
 
