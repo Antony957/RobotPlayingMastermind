@@ -46,7 +46,7 @@ class VisionNode(Node):
         self.scan_requested = False
 
         # --- Parameters ---
-        self.declare_parameter("image_topic", "/mastermind/camera/image_raw")
+        self.declare_parameter("image_topic", "/image_raw")
         self.declare_parameter("game_status_topic", "/game_status")
         self.declare_parameter("submit_code_topic", "/submit_code")
         self.declare_parameter("debug_topic", "mastermind/scanned_guess/debug_text")
@@ -63,11 +63,10 @@ class VisionNode(Node):
 
         # --- HSV Color Ranges ---
         self.color_ranges = {
-            'red':    ([0, 100, 100], [10, 255, 255]),
-            'red2':   ([170, 100, 100], [180, 255, 255]),
-            'green':  ([40, 100, 100], [80, 255, 255]),
+            'yellow':    ([0, 100, 100], [10, 255, 255]),
+            'red':   ([170, 100, 100], [180, 255, 255]),
             'blue':   ([100, 100, 100], [140, 255, 255]),
-            'yellow': ([20, 100, 100], [35, 255, 255]),
+            'green': ([20, 100, 100], [35, 255, 255]),
             'purple': ([140, 100, 100], [160, 255, 255]),
             'black':  ([0, 0, 0], [180, 255, 40])
         }
@@ -156,14 +155,15 @@ class VisionNode(Node):
 
         # --- 2. Color Detection ---
         for color_name, (lower, upper) in self.color_ranges.items():
-            if color_name == 'red':
-                l2, u2 = self.color_ranges['red2']
-                mask = cv2.inRange(hsv, np.array(lower), np.array(upper)) + \
-                       cv2.inRange(hsv, np.array(l2), np.array(u2))
-            elif color_name == 'red2':
-                continue
-            else:
-                mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
+            # if color_name == 'red':
+            #     l2, u2 = self.color_ranges['red2']
+            #     mask = cv2.inRange(hsv, np.array(lower), np.array(upper)) + \
+            #            cv2.inRange(hsv, np.array(l2), np.array(u2))
+            # elif color_name == 'red2':
+            #     continue
+            # else:
+            #     mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
+            mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
 
             mask = cv2.erode(mask, None, iterations=1)
             mask = cv2.dilate(mask, None, iterations=2)
@@ -195,6 +195,7 @@ class VisionNode(Node):
 
         # --- 4. Sorting and Output (Only if count == 4) ---
         detected_blocks.sort(key=lambda x: x[0])
+        self.get_logger().warning(f"DETECTED BLOCKS {detected_blocks}")
         
         result_labels = [b[1] for b in detected_blocks]
         result_indices = [self.COLOR_TO_INDEX.get(lbl, 0) for lbl in result_labels]
