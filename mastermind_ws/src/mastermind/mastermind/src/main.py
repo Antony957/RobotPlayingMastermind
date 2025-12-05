@@ -24,6 +24,7 @@ class Mastermind(Node):
     def __init__(self):
         super().__init__("mastermind")
         self.declare_parameter("secret", "")
+        self.declare_parameter("sim", False)
 
         # Game nodes
         self.game_state = GameState()
@@ -37,6 +38,7 @@ class Mastermind(Node):
         )
 
         self.game_in_progress = False
+        self.sim_mode = self.get_parameter("sim").get_parameter_value().bool_value
 
     def handle_status(self, msg: Status):
         sender = msg.sender
@@ -44,8 +46,11 @@ class Mastermind(Node):
 
         self.get_logger().info(f"Sender {sender} status {status}")
 
-        if sender == "game_state" and status == 0 :
-            self.reset_blocks()
+        if sender == "game_state" and status == 0 and self.game_in_progress:
+            if self.sim_mode:
+                # Call a script to reset blocks in Gazebo
+                self.reset_blocks()
+
             self.pick_and_place.reset_blocks()
 
     def check_secret(self, secret):
