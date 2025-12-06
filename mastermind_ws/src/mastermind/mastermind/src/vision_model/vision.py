@@ -27,13 +27,12 @@ class VisionNode(Node):
 
     # Color to Index Mapping
     COLOR_TO_INDEX = {
-        "unknown": 0,
-        "red": 1,
+        "red": 0,
+        "green": 1,
         "blue": 2,
-        "green": 3,
-        "yellow": 4,
-        "purple": 5, 
-        "black": 6,
+        "yellow": 3,
+        "purple": 4,
+        "black": 5,
     }
     
     ERROR_INDEX = 255
@@ -46,7 +45,7 @@ class VisionNode(Node):
         self.scan_requested = False
 
         # --- Parameters ---
-        self.declare_parameter("image_topic", "/mastermind/camera/image_raw")
+        self.declare_parameter("image_topic", "/image_raw")
         self.declare_parameter("game_status_topic", "/game_status")
         self.declare_parameter("submit_code_topic", "/submit_code")
         self.declare_parameter("debug_topic", "mastermind/scanned_guess/debug_text")
@@ -67,9 +66,9 @@ class VisionNode(Node):
             'red2':   ([170, 100, 100], [180, 255, 255]),
             'green':  ([40, 90, 100], [90, 255, 255]),
             'blue':   ([100, 200, 100], [130, 255, 255]),
-            'yellow': ([10, 100, 100], [35, 255, 255]),
+            'yellow': ([10, 110, 100], [35, 255, 255]),
             'purple': ([130, 100, 100], [160, 200, 255]),
-            'black':  ([0, 0, 0], [180, 100, 60])
+            'black':  ([0, 0, 0], [120, 130, 60])
         }
 
         # --- ROS Setup ---
@@ -145,11 +144,13 @@ class VisionNode(Node):
         height, width, _ = image.shape
 
         # --- 1. ROI Cropping (Updated for closer camera) ---
-        roi_y_start = int(height * 0.6) 
-        roi_y_end   = int(height * 0.99)
-        roi_x_start = int(width * 0.05)
-        roi_x_end   = int(width * 0.95)
+        roi_y_start = int(height * 0.33) 
+        roi_y_end   = int(height * 0.60)
+        roi_x_start = int(width * 0.18)
+        roi_x_end   = int(width * 0.82)
         roi_img = image[roi_y_start:roi_y_end, roi_x_start:roi_x_end]
+
+        
         
         hsv = cv2.cvtColor(roi_img, cv2.COLOR_BGR2HSV)
         detected_blocks = [] 
