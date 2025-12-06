@@ -8,3 +8,10 @@ build/
 install/
 log/
 
+test.py
+mastermind_ws/src/mastermind/mastermind/src/vision_model/vision_test.py
+mastermind_ws/src/mastermind/mastermind/src/vision_model/dataset/1.jpg
+mastermind_ws/src/mastermind/mastermind/src/vision_model/dataset/2.jpg
+mastermind_ws/src/mastermind/mastermind/src/vision_model/dataset/3.jpg
+mastermind_ws/src/mastermind/mastermind/src/vision_model/dataset/4.jpg
+mastermind_ws/src/mastermind/mastermind/src/vision_model/dataset/5.jpg
