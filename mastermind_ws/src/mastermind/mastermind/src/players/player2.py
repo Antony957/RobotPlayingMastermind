@@ -43,7 +43,7 @@ Output your guess in JSON format.
         if not len(self.history) == 0:
             user_prompt += "Guess History: "
             for item in self.history:
-                user_prompt += f"Guess: {item.guess}; Feedback: {item.feedback} "
+                user_prompt += f"Guess: {item['guess']}; Feedback: {item['feedback']} "
 
         user_prompt += """Example output: {
   \"reasoning\": \"Why this guess reduces the space under the no-duplicate constraint.\",
@@ -98,6 +98,20 @@ class Player2(Node):
         self.stop_flag = False
 
         self.client = None
+        self.game_status_sub = self.create_subscription(
+            GuessCheck, "guess_check", self.handle_guess, 10
+        )
+
+    def handle_guess(self, msg:GuessCheck):
+        num_correct_colors = msg.num_correct_colors
+        num_correct_pos = msg.num_correct_pos
+        if self.mode == 'ai':
+            self.client.history[-1] = ({"guess": self.client.history[-1]['guess'], "feedback": f"{num_correct_colors} correct color(s), {num_correct_pos} correct position(s)!"})
+            self.one_round()
+        else:
+            self.get_logger().info(f"Result in this round: \n {num_correct_colors} correct color(s), {num_correct_pos} correct position(s)\n")
+            self.one_round()
+
 
 
     def publish_code(self, code: List[int]):
@@ -131,34 +145,28 @@ class Player2(Node):
         """
         Continuously prompt the user for guesses and publish them.
         """
-        while not self.stop_flag:
-            try:
-                # Ask user for input
-                user_input = input(
-                    # "\nEnter your guess (e.g. 'red blue red blue') or 'q' to quit:\n"
-                    "\nEnter your guess (e.g. 'red blue black green'):\n"
-                ).strip()
+        # Ask user for input
+        user_input = input(
+            # "\nEnter your guess (e.g. 'red blue red blue') or 'q' to quit:\n"
+            "\nEnter your guess (e.g. 'red blue black green'):\n"
+        ).strip()
 
-                # if user_input.lower() in ["q", "quit", "exit"]:
-                #     self.get_logger().info("Exiting Player2 input loop.")
-                #     self.stop_flag = True
-                #     break
+        # if user_input.lower() in ["q", "quit", "exit"]:
+        #     self.get_logger().info("Exiting Player2 input loop.")
+        #     self.stop_flag = True
+        #     break
 
-                color_list = [c.lower() for c in user_input.split()]
-                
-                self.check_and_publish_color(color_list)
-                    
-
-            # Quit if player does Ctrl+D
-            except EOFError:
-                break
+        color_list = [c.lower() for c in user_input.split()]
+        
+        self.check_and_publish_color(color_list)
+            
 
     def ai_loop(self):
-        while not self.stop_flag:
-            reasoning, color_list = self.client.guess()
-            self.get_logger().info(reasoning)
-            self.get_logger().info(f"We are going to guess list {str(color_list)}")
-            self.check_and_publish_color(color_list)
+        reasoning, color_list = self.client.guess()
+        self.get_logger().info(reasoning)
+        self.get_logger().info(f"We are going to guess list {str(color_list)}")
+        self.client.history.append({"guess": str(color_list)})
+        self.check_and_publish_color(color_list)
 
 
     def destroy_node(self):
@@ -169,28 +177,31 @@ class Player2(Node):
         time.sleep(0.2)
         super().destroy_node()
 
+    def one_round(self):
+        if self.mode == "human":
+            self.get_logger().info("Player 2 running in HUMAN mode.")
+            self.stop_flag = False
+            self.input_loop()
+            
+        else:
+            self.get_logger().info("Player 2 running in AI mode.")
+            self.stop_flag = False
+            self.ai_loop()
+
 
     def run(self):
-        mode = self.get_parameter("mode").get_parameter_value().string_value
-        if mode != "human" and mode!= "ai":
+        self.client = Client()
+        self.mode = self.get_parameter("mode").get_parameter_value().string_value
+        if self.mode != "human" and self.mode!= "ai":
             raise ValueError("Mode must either human or ai")
         executor = MultiThreadedExecutor(num_threads=2)
         executor.add_node(self)
-        threading.Thread(target=executor.spin, daemon=True).start()
 
         try:
-
-            if mode == "human":
-                self.get_logger().info("Player 2 running in HUMAN mode.")
-                self.stop_flag = False
-                self.input_loop()
-                
-            else:
-                self.get_logger().info("Player 2 running in AI mode.")
-                self.stop_flag = False
-                self.client = Client()
-                self.ai_loop()
-                
+            threading.Thread(target=executor.spin, daemon=True).start()
+            self.one_round()
+            while rclpy.ok():
+                time.sleep(1)
             
         finally:
             executor.shutdown()
@@ -201,6 +212,7 @@ class Player2(Node):
 def main():
     rclpy.init()
     node = Player2()
+
     node.run()
     
 
