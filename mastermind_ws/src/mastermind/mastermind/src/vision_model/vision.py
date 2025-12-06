@@ -65,11 +65,11 @@ class VisionNode(Node):
         self.color_ranges = {
             'red':    ([0, 100, 100], [10, 255, 255]),
             'red2':   ([170, 100, 100], [180, 255, 255]),
-            'green':  ([40, 100, 100], [80, 255, 255]),
-            'blue':   ([100, 100, 100], [140, 255, 255]),
-            'yellow': ([20, 100, 100], [35, 255, 255]),
-            'purple': ([140, 100, 100], [160, 255, 255]),
-            'black':  ([0, 0, 0], [180, 255, 40])
+            'green':  ([40, 90, 100], [90, 255, 255]),
+            'blue':   ([100, 200, 100], [130, 255, 255]),
+            'yellow': ([10, 100, 100], [35, 255, 255]),
+            'purple': ([130, 100, 100], [160, 200, 255]),
+            'black':  ([0, 0, 0], [180, 100, 60])
         }
 
         # --- ROS Setup ---
@@ -132,7 +132,7 @@ class VisionNode(Node):
         self.get_logger().info("process frame")
         if self.latest_image is None: return
 
-        image = self.latest_image.copy()
+        image = self._pre_process_img(self.latest_image.copy())
 
         try:
             ok = cv2.imwrite("./debug.png", image)
@@ -145,7 +145,7 @@ class VisionNode(Node):
         height, width, _ = image.shape
 
         # --- 1. ROI Cropping (Updated for closer camera) ---
-        roi_y_start = int(height * 0.1) 
+        roi_y_start = int(height * 0.6) 
         roi_y_end   = int(height * 0.99)
         roi_x_start = int(width * 0.05)
         roi_x_end   = int(width * 0.95)
@@ -165,8 +165,11 @@ class VisionNode(Node):
             else:
                 mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
 
-            mask = cv2.erode(mask, None, iterations=1)
-            mask = cv2.dilate(mask, None, iterations=2)
+
+            kernel = np.ones((5, 5), np.uint8)   # 比默认 3x3 更大
+
+            mask = cv2.erode(mask, kernel, iterations=3)
+            mask = cv2.dilate(mask, kernel, iterations=4)  # 膨胀多一点
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             for c in contours:
@@ -208,10 +211,17 @@ class VisionNode(Node):
         
         self.code_pub.publish(msg)
 
-        # Debug
-        # debug_payload = {
-        #     "labels": result_labels,
-        #     "indices": result_indices,
-        #     "valid": True
-        # }
-        # self.get_logger().info(json.dumps(debug_payload))
+    def _pre_process_img(self, img, exp_factor=1.2, sat_factor=1.5):
+
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float32)
+        h, s, v = cv2.split(hsv)
+
+        s *= sat_factor
+
+        v = v * exp_factor
+        s = np.clip(s, 0, 255)
+        v = np.clip(v, 0, 255)
+
+        hsv_merged = cv2.merge([h, s, v]).astype(np.uint8)
+        out = cv2.cvtColor(hsv_merged, cv2.COLOR_HSV2BGR)
+        return out
