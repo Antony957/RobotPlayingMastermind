@@ -233,7 +233,7 @@ class PickAndPlaceNode(Node):
         is run by main.py
         """
         self.get_logger().info("Resetting blocks")
-        self.setup_gripper()
+        # self.setup_gripper()
 
         self.color_pick_queue = {
             "red": ["block_1"],
