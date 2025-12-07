@@ -1,4 +1,3 @@
-#  FROM gitlab-registry.oit.duke.edu/introtorobotics/mems-robotics-toolkit:mems-robotics-latest
 FROM gitlab-registry.oit.duke.edu/introtorobotics/mems-robotics-toolkit:kinova-jazzy-latest
 
 # (A) Add any extra system packages you need
@@ -11,10 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 
-RUN python3 -m venv /opt/ros_python
-
+# RUN python3 -m venv /opt/ros_python --system-site-packages
 
 # (B) Add any extra Python packages into the course's virtual environment
-RUN . /opt/ros_python/bin/activate && \
-    pip install --no-cache-dir \
+# . /opt/ros_python/bin/activate && \
+RUN pip install --no-cache-dir --break-system-packages\
     -r requirements.txt

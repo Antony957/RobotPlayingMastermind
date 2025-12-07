@@ -39,8 +39,8 @@ class PickAndPlaceNode(Node):
             self.gripper = GripperInterface(
                 node=self,
                 gripper_joint_names=["right_finger_bottom_joint"],
-                open_gripper_joint_positions=[0.80],
-                closed_gripper_joint_positions=[0.01],
+                open_gripper_joint_positions=[0.38],
+                closed_gripper_joint_positions=[0.75],
                 gripper_group_name="gripper",
                 gripper_command_action_name="/gen3_lite_2f_gripper_controller/gripper_cmd",
                 ignore_new_calls_while_executing=False,
