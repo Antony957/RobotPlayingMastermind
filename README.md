@@ -17,6 +17,11 @@ This repository contains code and assets for a two-player (and player-vs-robot) 
 * Autonomous robot guessing using a ChatGPT-powered strategy (PVE).
 * Visual verification using a YOLO object-detection model and camera.
 
+## Environment
+ 
+* ROS2 Jazzy, Gazebo Harmonic v8.9.0
+
+
 Repository structure (suggested)
 ```graphsql
 / (root)
